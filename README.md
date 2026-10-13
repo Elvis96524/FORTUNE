@@ -52,8 +52,12 @@ python3 -m http.server 8080
 
 ## 安装为应用
 
-- Chrome / Edge / Android：页面顶部会出现“安装到桌面”按钮，或使用浏览器菜单的“安装应用”。
-- iOS Safari：分享按钮 → “添加到主屏幕”。
+页面顶部有一个始终可见的「下载安装 App」按钮（已作为 App 打开时自动隐藏）：
+
+- Chrome / Edge / Android Chrome：点击后直接弹出系统安装框。
+- iPhone / iPad（Safari）：iOS 不允许网页直接触发安装，点击后会弹出步骤：分享 → 添加到主屏幕 → 添加。
+- Mac Safari、Firefox、其他浏览器：点击后按当前浏览器显示对应的安装方法（Firefox 桌面版不支持安装网页应用）。
+- 用 `file://` 打开或非 https 网址：弹出提示，需要部署到 https（如 GitHub Pages）后才能安装。
 
 ## 姓名笔画说明
 

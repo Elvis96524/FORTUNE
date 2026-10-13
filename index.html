@@ -63,7 +63,10 @@
     <h1 class="text-3xl sm:text-4xl font-bold tracking-[.25em] text-gold-400">今日运程</h1>
     <p class="mt-2 text-sm text-stone-400 tracking-widest">依生辰八字 · 测今日运势 · 观一生运程</p>
     <p id="todayLine" class="mt-3 text-xs text-stone-500"></p>
-    <button id="btnInstall" type="button" class="hidden mt-3 rounded-full border border-gold-500/50 px-4 py-1.5 text-xs tracking-widest text-gold-300 transition hover:bg-gold-500/10">安装到桌面</button>
+    <button id="btnInstall" type="button" class="mt-4 inline-flex items-center gap-2 rounded-full border border-gold-500/60 bg-gold-500/5 px-5 py-2 text-sm tracking-widest text-gold-300 transition hover:bg-gold-500/15">
+      <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>
+      下载安装 App
+    </button>
   </header>
 
   <!-- Library banner -->
@@ -1293,17 +1296,123 @@ function onCalc() {
     });
   }
 
-  // “安装到桌面”按钮（Chrome / Edge / Android；iOS 请用分享菜单“添加到主屏幕”）
-  let deferred = null;
+  /* ---------- “下载安装 App”按钮 ----------
+   * 浏览器允许一键安装（Chrome / Edge / Android）时直接弹出系统安装框；
+   * 其他情况（iPhone、Safari、Firefox，或浏览器尚未触发安装事件）弹出对应的安装步骤。
+   * 已作为 App 打开（独立窗口）时隐藏按钮。 */
   const btn = document.getElementById('btnInstall');
-  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; btn.classList.remove('hidden'); });
+  let deferred = null, lastFocus = null, keyHandler = null;
+
+  const isInstalled = () => {
+    try {
+      return ['standalone', 'fullscreen', 'minimal-ui'].some(m => window.matchMedia('(display-mode: ' + m + ')').matches) || navigator.standalone === true;
+    } catch (e) { return false; }
+  };
+  // 用内联样式隐藏 / 显示：即使 Tailwind 尚未加载也能生效
+  const hideBtn = () => { btn.style.display = 'none'; };
+  const syncBtn = () => { if (isInstalled()) hideBtn(); else btn.style.display = ''; };
+  syncBtn();
+  try { window.matchMedia('(display-mode: standalone)').addEventListener('change', syncBtn); } catch (e) {}
+
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; });
+  window.addEventListener('appinstalled', () => { deferred = null; hideBtn(); closeGuide(); });
+
+  // 按浏览器 / 系统给出安装步骤
+  function installGuide() {
+    const ua = navigator.userAgent || '';
+    const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isAndroid = /Android/i.test(ua);
+    const isFx = /Firefox|FxiOS/.test(ua);
+    const isEdge = /Edg(?:e|A|iOS)?\//.test(ua);
+    const isChrome = /Chrome|CriOS/.test(ua) && !isEdge && !/OPR\//.test(ua);
+    const isSafari = /Safari\//.test(ua) && !/Chrome|CriOS|Edg|FxiOS|Firefox|OPR|Android/.test(ua);
+    if (location.protocol === 'file:' || !window.isSecureContext)
+      return { title: '需要通过 https 网址打开', steps: ['当前是以本地文件（file://）或不安全的 http 方式打开的，浏览器不允许安装。', '请把本项目部署到 GitHub Pages 等 https 站点（本机预览可用 http://localhost），再用网址打开本页。'] };
+    if (isIOS && isSafari)
+      return { title: '在 iPhone / iPad 上安装', steps: ['点击 Safari 的「分享」按钮（方框带向上箭头，iPhone 在底部，iPad 在顶部）。', '向下滑动，选择「添加到主屏幕」。', '点右上角「添加」，之后即可从主屏幕打开。'] };
+    if (isIOS)
+      return { title: '在 iPhone / iPad 上安装', steps: ['点击浏览器的「分享」按钮，选择「添加到主屏幕」。', '如果没有这一项，请先点“复制网址”，再用 Safari 打开该网址，然后点「分享」→「添加到主屏幕」。'] };
+    if (isAndroid && isFx)
+      return { title: '在 Android 上安装', steps: ['点右上角「⋮」菜单。', '选择「安装」（或「添加到主屏幕」），确认即可。'] };
+    if (isAndroid)
+      return { title: '在 Android 上安装', steps: ['点浏览器右上角的「⋮」菜单。', '选择「安装应用」或「添加到主屏幕」（三星浏览器：「添加页面到」→「主屏幕」）。', '确认后即可从桌面打开。'] };
+    if (isFx)
+      return { title: '此浏览器暂不支持安装', steps: ['桌面版 Firefox 不支持安装网页应用。', '请用 Chrome 或 Edge 打开本页，再点“下载安装 App”；或把本页加入书签。'] };
+    if (isSafari)
+      return { title: '在 Mac 上安装', steps: ['在 Safari 菜单栏选择「文件」→「添加到程序坞」（需要 Safari 17 或更新版本）。', '确认名称后点「添加」。'] };
+    if (isEdge)
+      return { title: '在 Edge 上安装', steps: ['点地址栏右侧的「安装」图标；或点右上角「…」→「应用」→「将此站点作为应用安装」。', '在弹出的窗口中点「安装」。'] };
+    if (isChrome)
+      return { title: '在 Chrome 上安装', steps: ['点地址栏右侧的「安装」图标（显示器带向下箭头）；或点右上角「⋮」→「投放、保存和分享」→「安装页面为应用」。', '在弹出的窗口中点「安装」。', '如果看不到安装选项，请刷新页面并等待几秒后重试。'] };
+    return { title: '安装到桌面', steps: ['打开浏览器菜单，找到「安装应用」或「添加到主屏幕」。', '如果没有这一项，请改用 Chrome、Edge（电脑 / Android）或 Safari（iPhone / Mac）打开本页。'] };
+  }
+
+  function closeGuide() {
+    const m = document.getElementById('installModal');
+    if (!m) return;
+    m.remove();
+    if (keyHandler) { document.removeEventListener('keydown', keyHandler); keyHandler = null; }
+    if (lastFocus && lastFocus.focus) { try { lastFocus.focus(); } catch (e) {} }
+  }
+
+  function openGuide() {
+    closeGuide();
+    const g = installGuide();
+    lastFocus = document.activeElement;
+    const wrap = document.createElement('div');
+    wrap.id = 'installModal';
+    wrap.className = 'fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 sm:items-center';
+    wrap.style.cssText = 'position:fixed;inset:0;z-index:50;display:flex;justify-content:center;padding:16px;background:rgba(0,0,0,.7)';   // 关键布局内联，避免 Tailwind 未加载时错位
+    wrap.innerHTML = `
+      <div role="dialog" aria-modal="true" aria-labelledby="imTitle" class="card w-full max-w-md p-6">
+        <div class="mb-3 flex items-start justify-between gap-3">
+          <h2 id="imTitle" class="text-lg font-bold tracking-widest text-gold-400"></h2>
+          <button type="button" id="imClose" class="rounded-lg px-2 py-1 text-stone-400 hover:text-stone-100" aria-label="关闭">✕</button>
+        </div>
+        <ol id="imSteps" class="list-decimal space-y-2 pl-5 text-sm leading-relaxed text-stone-300"></ol>
+        <p class="mt-4 text-xs leading-relaxed text-stone-500">安装后可像普通 App 一样从桌面或主屏幕打开，并支持离线使用。</p>
+        <div class="mt-5 flex gap-3">
+          <button type="button" id="imCopy" class="flex-1 rounded-xl border border-gold-500/50 py-2.5 text-sm text-gold-300 hover:bg-gold-500/10">复制网址</button>
+          <button type="button" id="imOk" class="flex-1 rounded-xl bg-gradient-to-r from-crimson-600 to-gold-600 py-2.5 text-sm font-bold text-white">知道了</button>
+        </div>
+      </div>`;
+    document.body.appendChild(wrap);
+    wrap.querySelector('#imTitle').textContent = g.title;
+    const ol = wrap.querySelector('#imSteps');
+    g.steps.forEach(s => { const li = document.createElement('li'); li.textContent = s; ol.appendChild(li); });
+
+    wrap.addEventListener('click', e => { if (e.target === wrap) closeGuide(); });
+    wrap.querySelector('#imClose').onclick = closeGuide;
+    wrap.querySelector('#imOk').onclick = closeGuide;
+    const copy = wrap.querySelector('#imCopy');
+    copy.onclick = async () => {
+      let ok = false;
+      try { await navigator.clipboard.writeText(location.href.split('#')[0]); ok = true; } catch (e) {
+        try { const ta = document.createElement('textarea'); ta.value = location.href; document.body.appendChild(ta); ta.select(); ok = document.execCommand('copy'); ta.remove(); } catch (e2) {}
+      }
+      copy.textContent = ok ? '已复制' : '请手动复制地址栏网址';
+    };
+    const focusables = [wrap.querySelector('#imClose'), copy, wrap.querySelector('#imOk')];
+    keyHandler = e => {
+      if (e.key === 'Escape') { e.preventDefault(); closeGuide(); return; }
+      if (e.key !== 'Tab') return;
+      const i = focusables.indexOf(document.activeElement), last = focusables.length - 1;
+      if (e.shiftKey && i <= 0) { e.preventDefault(); focusables[last].focus(); }
+      else if (!e.shiftKey && i === last) { e.preventDefault(); focusables[0].focus(); }
+    };
+    document.addEventListener('keydown', keyHandler);
+    wrap.querySelector('#imOk').focus();
+  }
+
   btn.addEventListener('click', async () => {
-    if (!deferred) return;
-    deferred.prompt();
-    try { await deferred.userChoice; } catch (e) {}
-    deferred = null; btn.classList.add('hidden');
+    if (!deferred) { openGuide(); return; }
+    const ev = deferred; deferred = null;                 // 安装事件只能使用一次
+    try {
+      ev.prompt();
+      const choice = await ev.userChoice;
+      if (choice && choice.outcome === 'accepted') hideBtn();
+    } catch (e) { openGuide(); }
   });
-  window.addEventListener('appinstalled', () => btn.classList.add('hidden'));
 })();
 </script>
 </body>
