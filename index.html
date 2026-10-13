@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>今日运程 · 八字测算</title>
+<meta name="description" content="依生辰八字测算今日运势与一生运程，参黄历宜忌与姓名五格。">
+<meta name="theme-color" content="#0a090d">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="今日运程">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  if (window.tailwind) tailwind.config = {
+    theme: { extend: {
+      colors: {
+        ink: { 950: '#0a090d', 900: '#100e14', 800: '#18151d', 700: '#221e29', 600: '#2e2937' },
+        gold: { 300: '#ecd48a', 400: '#e0bc5a', 500: '#d4af37', 600: '#b8932a' },
+        crimson: { 400: '#e0525a', 500: '#c8323c', 600: '#a3222c' }
+      },
+      fontFamily: { serif: ['"Noto Serif SC"', '"Songti SC"', '"STSong"', 'serif'] }
+    } }
+  };
+</script>
+<style>
+  body {
+    background:
+      radial-gradient(900px 500px at 85% -10%, rgba(200,50,60,.16), transparent 60%),
+      radial-gradient(800px 500px at 0% 0%, rgba(212,175,55,.10), transparent 55%),
+      #0a090d;
+  }
+  .card { background: linear-gradient(180deg, rgba(34,30,41,.85), rgba(24,21,29,.85)); border: 1px solid rgba(212,175,55,.18); border-radius: 1rem; }
+  .fade-up { animation: fadeUp .6s ease both; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  .ring-fg { transition: stroke-dashoffset 1.2s cubic-bezier(.2,.8,.2,1); }
+  select { background-color: #18151d; }
+  select:focus, input:focus, button:focus-visible { outline: 2px solid #d4af37; outline-offset: 2px; }
+  .fld { background-color: #18151d; }
+  input[type=number].stk { -moz-appearance: textfield; }
+  .seal { font-family: "Noto Serif SC", serif; }
+  .tab { border-radius: .6rem; padding: .6rem 0; letter-spacing: .25em; font-weight: 600; color: #a8a29e; transition: all .2s; }
+  .tab:hover { color: #e7e5e4; }
+  .tab[aria-selected="true"] { background: linear-gradient(90deg, #a3222c, #b8932a); color: #fff; box-shadow: 0 2px 12px rgba(163,34,44,.3); }
+  .cyc { cursor: pointer; transition: border-color .2s, transform .2s; }
+  .cyc:hover { transform: translateY(-2px); }
+</style>
+</head>
+<body class="font-serif text-stone-200 min-h-screen antialiased">
+
+<main class="max-w-3xl mx-auto px-4 py-10 sm:py-14">
+
+  <!-- Header -->
+  <header class="text-center mb-8">
+    <div class="inline-flex items-center justify-center w-14 h-14 rounded-md border-2 border-crimson-500 text-crimson-400 seal text-2xl font-bold rotate-[-6deg] mb-4">运</div>
+    <h1 class="text-3xl sm:text-4xl font-bold tracking-[.25em] text-gold-400">今日运程</h1>
+    <p class="mt-2 text-sm text-stone-400 tracking-widest">依生辰八字 · 测今日运势 · 观一生运程</p>
+    <p id="todayLine" class="mt-3 text-xs text-stone-500"></p>
+    <button id="btnInstall" type="button" class="hidden mt-3 rounded-full border border-gold-500/50 px-4 py-1.5 text-xs tracking-widest text-gold-300 transition hover:bg-gold-500/10">安装到桌面</button>
+  </header>
+
+  <!-- Library banner -->
+  <div id="libBanner" class="hidden mb-6 rounded-lg border border-crimson-500/60 bg-crimson-600/10 px-4 py-3 text-sm text-crimson-400"></div>
+
+  <!-- Input -->
+  <section class="card p-5 sm:p-7">
+    <div class="mb-5 grid grid-cols-2 gap-1 rounded-xl bg-ink-900 p-1" role="tablist" aria-label="测算类型">
+      <button type="button" id="tabToday" class="tab" role="tab" data-mode="today" aria-selected="true">今日运程</button>
+      <button type="button" id="tabLife" class="tab" role="tab" data-mode="life" aria-selected="false">一生运程</button>
+    </div>
+    <h2 class="text-gold-400 tracking-widest text-sm mb-4">生辰信息（公历）</h2>
+    <div class="grid grid-cols-3 gap-3">
+      <label class="block">
+        <span class="block text-xs text-stone-400 mb-1">出生年</span>
+        <select id="selYear" class="w-full rounded-lg border border-ink-600 px-3 py-2.5 text-stone-100"></select>
+      </label>
+      <label class="block">
+        <span class="block text-xs text-stone-400 mb-1">月</span>
+        <select id="selMonth" class="w-full rounded-lg border border-ink-600 px-3 py-2.5 text-stone-100"></select>
+      </label>
+      <label class="block">
+        <span class="block text-xs text-stone-400 mb-1">日</span>
+        <select id="selDay" class="w-full rounded-lg border border-ink-600 px-3 py-2.5 text-stone-100"></select>
+      </label>
+    </div>
+    <label class="block mt-3">
+      <span class="block text-xs text-stone-400 mb-1">出生时辰</span>
+      <select id="selHour" class="w-full rounded-lg border border-ink-600 px-3 py-2.5 text-stone-100"></select>
+    </label>
+    <div class="mt-3 grid grid-cols-2 gap-3">
+      <label class="block">
+        <span class="block text-xs text-stone-400 mb-1">姓（选填）</span>
+        <input id="inSur" type="text" maxlength="2" autocomplete="off" placeholder="如：王" class="fld w-full rounded-lg border border-ink-600 px-3 py-2.5 text-stone-100 placeholder-stone-600">
+      </label>
+      <label class="block">
+        <span class="block text-xs text-stone-400 mb-1">名（选填）</span>
+        <input id="inGiv" type="text" maxlength="2" autocomplete="off" placeholder="如：小明" class="fld w-full rounded-lg border border-ink-600 px-3 py-2.5 text-stone-100 placeholder-stone-600">
+      </label>
+    </div>
+    <div id="strokeBox" class="hidden mt-3"></div>
+    <div id="genderWrap" style="display:none" class="mt-3">
+      <label class="block">
+        <span class="block text-xs text-stone-400 mb-1">性别（大运顺逆需要）</span>
+        <select id="selGender" class="w-full rounded-lg border border-ink-600 px-3 py-2.5 text-stone-100">
+          <option value="1">男（乾造）</option>
+          <option value="0">女（坤造）</option>
+        </select>
+      </label>
+    </div>
+    <button id="btnCalc" type="button"
+      class="mt-6 w-full rounded-xl bg-gradient-to-r from-crimson-600 via-crimson-500 to-gold-600 py-3.5 text-lg font-bold tracking-[.3em] text-white shadow-lg shadow-crimson-600/20 transition hover:brightness-110 active:scale-[.99] disabled:opacity-40 disabled:cursor-not-allowed">
+      <span id="btnLabel">测算今日运势</span>
+    </button>
+    <p class="mt-3 text-[11px] leading-relaxed text-stone-500">
+      月柱以节气为界、年柱以立春为界，由 lunar-javascript 计算；晚子时（23:00–23:59）按“日柱算当天”处理。未做真太阳时校正，临近时辰交界处请自行斟酌。
+    </p>
+  </section>
+
+  <!-- Result -->
+  <div id="result" class="mt-8 space-y-6"></div>
+
+  <footer class="mt-12 text-center text-[11px] leading-relaxed text-stone-600">
+    传统文化参考，结果仅供娱乐，不构成任何决策、医疗或投资依据。<br>
+    历法与黄历数据来自开源库 lunar-javascript。<br>
+    姓名部分为传统姓名学“五格剖象法”的简化实现（笔画取康熙字典，数理吉凶各流派略有出入），仅作辅助参考，不改变八字本身。
+  </footer>
+</main>
+
+<script>
+/* ==========================================================================
+ * 1. 加载 lunar-javascript（CDN → 备用 CDN → 本地 ./lunar.js）
+ * ======================================================================== */
+const LUNAR_SRCS = [
+  'https://cdn.jsdelivr.net/npm/lunar-javascript/lunar.js',
+  'https://unpkg.com/lunar-javascript/lunar.js',
+  './lunar.js'
+];
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src; s.async = true;
+    s.onload = () => resolve(src);
+    s.onerror = () => { s.remove(); reject(new Error('load failed: ' + src)); };
+    document.head.appendChild(s);
+  });
+}
+function resolveLunarLib() {
+  const g = globalThis;
+  if (g.Solar && g.Lunar) return { Solar: g.Solar, Lunar: g.Lunar };
+  for (const k of ['lunar', 'LunarJavascript', 'lunarJavascript']) {
+    if (g[k] && g[k].Solar && g[k].Lunar) return { Solar: g[k].Solar, Lunar: g[k].Lunar };
+  }
+  return null;
+}
+async function ensureLunar() {
+  let lib = resolveLunarLib();
+  if (lib) return lib;
+  for (const src of LUNAR_SRCS) {
+    try { await loadScript(src); lib = resolveLunarLib(); if (lib) return lib; } catch (e) { /* try next */ }
+  }
+  return null;
+}
+</script>
+
+<script>
+/* ==========================================================================
+ * 2. 核心算法（纯函数，不依赖 lunar-javascript，便于单独测试）
+ * ======================================================================== */
+// ==CORE-START==
+const GAN = [...'甲乙丙丁戊己庚辛壬癸'];
+const ZHI = [...'子丑寅卯辰巳午未申酉戌亥'];
+const GAN_WX = { 甲:'木', 乙:'木', 丙:'火', 丁:'火', 戊:'土', 己:'土', 庚:'金', 辛:'金', 壬:'水', 癸:'水' };
+const ZHI_WX = { 子:'水', 丑:'土', 寅:'木', 卯:'木', 辰:'土', 巳:'火', 午:'火', 未:'土', 申:'金', 酉:'金', 戌:'土', 亥:'水' };
+const YANG = new Set([...'甲丙戊庚壬']);
+const HIDDEN = { 子:'癸', 丑:'己癸辛', 寅:'甲丙戊', 卯:'乙', 辰:'戊乙癸', 巳:'丙庚戊', 午:'丁己', 未:'己丁乙', 申:'庚壬戊', 酉:'辛', 戌:'戊辛丁', 亥:'壬甲' };
+const HID_W = { 1:[1], 2:[.7,.3], 3:[.6,.3,.1] };
+const WX = ['木','火','土','金','水'];
+const SHENG = { 木:'火', 火:'土', 土:'金', 金:'水', 水:'木' };   // 相生
+const KE    = { 木:'土', 土:'水', 水:'火', 火:'金', 金:'木' };   // 相克
+const WX_COLOR = { 木:'#5fbf7a', 火:'#e5584f', 土:'#d9a441', 金:'#d8d3c4', 水:'#5b8fd9' };
+
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const hiddenOf = z => { const l = [...HIDDEN[z]]; return l.map((gan, i) => ({ gan, w: HID_W[l.length][i] })); };
+
+function shiShen(dm, g) {
+  const a = GAN_WX[dm], b = GAN_WX[g], same = YANG.has(dm) === YANG.has(g);
+  if (a === b) return same ? '比肩' : '劫财';
+  if (SHENG[a] === b) return same ? '食神' : '伤官';
+  if (KE[a] === b) return same ? '偏财' : '正财';
+  if (KE[b] === a) return same ? '七杀' : '正官';
+  return same ? '偏印' : '正印';
+}
+
+/* 命局分析：五行力量、日主强弱、喜忌五行 */
+function analyzeChart(c) {
+  const dm = c.d[0], dmEl = GAN_WX[dm];
+  const el = { 木:0, 火:0, 土:0, 金:0, 水:0 };
+  const ganW = { y:1, m:1.2, h:1 };                 // 日干本身另计
+  const zhiW = { y:1, m:2.5, d:1.5, h:1.2 };        // 月令权重最高
+  for (const k in ganW) el[GAN_WX[c[k][0]]] += ganW[k];
+  for (const k in zhiW) for (const h of hiddenOf(c[k][1])) el[GAN_WX[h.gan]] += zhiW[k] * h.w;
+  el[dmEl] += 1;
+  const total = WX.reduce((s, e) => s + el[e], 0);
+  const resEl = WX.find(x => SHENG[x] === dmEl);            // 印
+  const outEl = SHENG[dmEl];                                // 食伤
+  const wealthEl = KE[dmEl];                                // 财
+  const officerEl = WX.find(x => KE[x] === dmEl);           // 官杀
+  const ratio = (el[dmEl] + el[resEl]) / total;
+  const strong = ratio >= 0.5;
+  const FAV = {
+    weak:   { 比劫:.8,  印:1,   食伤:-.3, 财:-.6, 官杀:-.9 },
+    strong: { 比劫:-1,  印:-.8, 食伤:.8,  财:1,   官杀:.6 }
+  }[strong ? 'strong' : 'weak'];
+  const fav = { [dmEl]: FAV.比劫, [resEl]: FAV.印, [outEl]: FAV.食伤, [wealthEl]: FAV.财, [officerEl]: FAV.官杀 };
+  const label = ratio >= .6 ? '身强' : ratio >= .5 ? '中和偏强' : ratio >= .4 ? '中和偏弱' : '身弱';
+  const favorable = WX.filter(e => fav[e] > 0).sort((a, b) => fav[b] - fav[a]);
+  const unfavorable = WX.filter(e => fav[e] < 0).sort((a, b) => fav[a] - fav[b]).slice(0, 2);
+  return { dm, dmEl, el, total, ratio, strong, label, fav, favorable, unfavorable };
+}
+
+/* 地支关系 */
+const LIUHE = [['子','丑'],['寅','亥'],['卯','戌'],['辰','酉'],['巳','申'],['午','未']];
+const CHONG = [['子','午'],['丑','未'],['寅','申'],['卯','酉'],['辰','戌'],['巳','亥']];
+const HAI   = [['子','未'],['丑','午'],['寅','巳'],['卯','辰'],['申','亥'],['酉','戌']];
+const XING  = [['寅','巳'],['巳','申'],['寅','申'],['丑','戌'],['戌','未'],['丑','未'],['子','卯']];
+const ZIXING = new Set(['辰','午','酉','亥']);
+const SANHE = [['申','子','辰'],['亥','卯','未'],['寅','午','戌'],['巳','酉','丑']];
+const HE5 = [['甲','己'],['乙','庚'],['丙','辛'],['丁','壬'],['戊','癸']];      // 天干五合
+const GANCHONG = [['甲','庚'],['乙','辛'],['丙','壬'],['丁','癸']];            // 天干相冲
+const pairHas = (list, a, b) => list.some(p => (p[0] === a && p[1] === b) || (p[0] === b && p[1] === a));
+
+function branchRelations(a, b) {
+  const r = [];
+  if (pairHas(LIUHE, a, b)) r.push({ t:'六合', s:5 });
+  else if (a !== b && SANHE.some(g => g.includes(a) && g.includes(b))) r.push({ t:'半合', s:3 });
+  if (pairHas(CHONG, a, b)) r.push({ t:'六冲', s:-7 });
+  if (pairHas(XING, a, b) || (a === b && ZIXING.has(a))) r.push({ t:'相刑', s:-4 });
+  if (pairHas(HAI, a, b)) r.push({ t:'相害', s:-3 });
+  return r;
+}
+
+/* 十神解读 */
+const SS_TEXT = {
+  比肩: { career:'同辈与搭档的助力明显，适合团队协作、并肩推进，但要防各自为政、意见相左。',
+          wealth:'财路以稳为主，易有合伙或分摊型的开支，共担比独自冒进更合适。',
+          mood:'自我意识较强，心态踏实，坚持己见的同时多留意他人感受。' },
+  劫财: { career:'竞争气息偏浓，同事或对手可能分走注意力与资源，宜明确边界、守住自己的成果。',
+          wealth:'易有人情开销或财务被分薄，不宜借贷、担保与冲动消费。',
+          mood:'情绪起伏稍大，容易好胜或攀比，放慢节奏、深呼吸会更顺。' },
+  食神: { career:'表达与创意顺畅，适合写作、设计、教学与沟通，思路清晰、灵感充足。',
+          wealth:'靠才艺与手艺生财，小额进账与愉快的消费并存，享受而不放纵。',
+          mood:'心情舒展、松弛愉悦，适合与朋友聚餐、做自己喜欢的事。' },
+  伤官: { career:'才华锋芒毕露，适合突破与创新，但言辞易直，对上级与客户注意措辞。',
+          wealth:'创意变现的好时机，同时要防因口舌或冲动而破财。',
+          mood:'表达欲强、略带叛逆，别把情绪化的话说得太满。' },
+  偏财: { career:'机会来自外部与人脉，适合拓展、洽谈与外出跑动，灵活应变更占优势。',
+          wealth:'有意外之财或额外机会，但偏财起落快，见好就收，不宜重仓。',
+          mood:'兴致高、社交活跃，容易被新鲜事物吸引，注意分寸。' },
+  正财: { career:'按部就班、踏实履责最见成效，适合处理账目、合同、绩效与例行事务。',
+          wealth:'正当收入稳定，宜储蓄、理财与还款规划，细水长流。',
+          mood:'心态务实安稳，重视责任与承诺，生活有秩序感。' },
+  七杀: { career:'压力与挑战并存，可能有突发任务或强势上司，敢担当者可立功，先排优先级再行动。',
+          wealth:'支出与压力同步上升，控制冲动消费，守住底线。',
+          mood:'容易紧绷或急躁，适合运动释放压力，避免与人硬碰硬。' },
+  正官: { career:'规则与秩序占上风，适合汇报、面试、签约等正式场合，易获认可与信任。',
+          wealth:'收入有保障，依规办事，避免灰色操作与违规。',
+          mood:'自律而端正、有责任感，但别过度苛求自己。' },
+  偏印: { career:'适合独立思考、研究、学习新技能与钻研难题，灵感偏冷门而独特。',
+          wealth:'财运平稳偏内敛，宜投资自己、学习与健康，少做社交型花销。',
+          mood:'偏向内省、想独处，多思多虑时可写下来或散步放空。' },
+  正印: { career:'贵人运佳，有长辈、老师或前辈的提点，适合学习、考证、请教与规划。',
+          wealth:'有稳固后盾，宜守成与积累，不必急于求成。',
+          mood:'内心安定踏实，易得到关怀与理解，适合休养与充电。' }
+};
+const LEVELS = [
+  { min: 88, name:'大吉', verdict:'气顺势强，宜主动出击、把握良机。' },
+  { min: 76, name:'吉',   verdict:'整体顺遂，贵人与机会并现。' },
+  { min: 62, name:'小吉', verdict:'稳中有进，按计划推进即可。' },
+  { min: 50, name:'平',   verdict:'平稳无大波澜，适合收拾旧账、整理思路。' },
+  { min: 0,  name:'宜守', verdict:'能量偏低，宜守不宜攻，多休息、少冒进。' }
+];
+const ZX_SCORE = { 成:2, 开:2, 定:2, 满:2, 除:0, 收:0, 平:0, 执:0, 建:0, 危:-2, 闭:-2, 破:-2 };
+
+/* 幸运数字（河图）与幸运色 */
+const HETU = { 木:[3,8], 火:[2,7], 土:[5,10], 金:[4,9], 水:[1,6] };
+const WX_COLORS = {
+  木: [{ name:'青绿', hex:'#2F9E6E' }, { name:'翠绿', hex:'#58B368' }],
+  火: [{ name:'朱红', hex:'#D64541' }, { name:'绛紫', hex:'#8E3B6B' }],
+  土: [{ name:'姜黄', hex:'#D4A33B' }, { name:'驼棕', hex:'#B07D48' }],
+  金: [{ name:'月白', hex:'#E9E6DC' }, { name:'香槟金', hex:'#D8BE7F' }],
+  水: [{ name:'靛蓝', hex:'#2F5DA8' }, { name:'玄黑', hex:'#2B2F3A' }]
+};
+function hashStr(s) { let h = 2166136261; for (const c of s) { h ^= c.codePointAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+function mulberry32(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+function luckyOf(a, today, seedKey) {
+  const rnd = mulberry32(hashStr(seedKey));
+  const score = {};
+  for (const e of WX) score[e] = a.fav[e];
+  score[GAN_WX[today.d[0]]] += .5;                  // 今日天干五行
+  score[ZHI_WX[today.d[1]]] += .5;                  // 今日地支五行
+  const ranked = [...WX].sort((x, y) => score[y] - score[x] || WX.indexOf(x) - WX.indexOf(y));
+  const [e1, e2, e3] = ranked;
+  const numbers = [...HETU[e1], HETU[e2][Math.floor(rnd() * 2)], HETU[e3][Math.floor(rnd() * 2)]];
+  const k = Math.floor(rnd() * numbers.length);
+  const rotated = numbers.slice(k).concat(numbers.slice(0, k));
+  const colors = [
+    { ...WX_COLORS[e1][0], el: e1 }, { ...WX_COLORS[e1][1], el: e1 }, { ...WX_COLORS[e2][0], el: e2 }
+  ];
+  return { elements: [e1, e2], numbers: rotated, colors };
+}
+
+/* 今日运势 = 命局喜忌 × 今日干支 + 地支合冲刑害 + 黄历吉凶 */
+function dailyFortune(chart, today, almanac, seedKey, name) {
+  const a = analyzeChart(chart);
+  const dm = a.dm, dg = today.d[0], dz = today.d[1], mz = today.m[1];
+  const favZhi = z => hiddenOf(z).reduce((s, h) => s + a.fav[GAN_WX[h.gan]] * h.w, 0);
+  const fg = a.fav[GAN_WX[dg]], fz = favZhi(dz), fm = favZhi(mz);
+  let total = (12 * fg + 12 * fz + 5 * fm) * .9;
+
+  const notes = [];
+  const PAL = { y:'年支', m:'月支', d:'日支', h:'时支' }, PW = { y:1, m:1, d:2, h:1 };
+  let rel = 0;
+  for (const k of ['y','m','d','h']) {
+    const z = chart[k][1];
+    for (const r of branchRelations(dz, z)) {
+      rel += r.s * PW[k];
+      notes.push({ t:r.t, s:r.s, text:`今日日支「${dz}」与你的${PAL[k]}「${z}」${r.t}` });
+    }
+  }
+  total += clamp(rel, -16, 16);
+  if (pairHas(HE5, dg, dm)) { total += 5; notes.push({ t:'天干合', s:5, text:`今日日干「${dg}」与你的日主「${dm}」相合` }); }
+  else if (pairHas(GANCHONG, dg, dm)) { total -= 3; notes.push({ t:'天干冲', s:-3, text:`今日日干「${dg}」与你的日主「${dm}」相冲` }); }
+
+  total += almanac.tianShenType === '黄道' ? 3 : almanac.tianShenType === '黑道' ? -3 : 0;
+  total += ZX_SCORE[almanac.zhiXing] || 0;
+
+  // 姓名加成：五格与八字喜用的契合、五格数理吉凶、三才配置、今日五行对人格的生克（合计限制在 ±8 分内）
+  let nameInfo = null;
+  if (name) {
+    const nb = nameBundle(a, name), E = nb.np.grids.ren.wx;
+    const relDay = day => day === E ? 1 : SHENG[day] === E ? 2 : SHENG[E] === day ? -.5 : KE[day] === E ? -2 : .5;
+    const daily = .67 * relDay(GAN_WX[dg]) + .33 * relDay(ZHI_WX[dz]);
+    const parts = [
+      { k:'与八字契合', v: 4 * nb.fit }, { k:'五格数理', v: 3 * nb.np.num },
+      { k:'三才配置', v: 2 * nb.np.sancai }, { k:'今日五行', v: 1.25 * daily }
+    ];
+    const bonus = clamp(parts.reduce((s, p) => s + p.v, 0), -8, 8);
+    total += bonus;
+    const REL_TXT = { '2':'相生，得助', '1':'比和，同气相助', '0.5':'你克今日之气，略耗心力', '-0.5':'人格生今日之气，略有泄耗', '-2':'今日之气克人格，宜谨慎' };
+    nameInfo = { ...nb, bonus: Math.round(bonus * 10) / 10, parts: parts.map(p => ({ k:p.k, v: Math.round(p.v * 10) / 10 })),
+      dailyText: `今日日干「${dg}」属${GAN_WX[dg]}，与你的人格（${E}）${REL_TXT[relDay(GAN_WX[dg])]}` };
+  }
+
+  const score = clamp(Math.round(62 + total), 35, 98);
+  const level = LEVELS.find(l => score >= l.min);
+  const ssGan = shiShen(dm, dg), ssZhi = shiShen(dm, hiddenOf(dz)[0].gan);
+
+  const T = SS_TEXT[ssGan];
+  const hasClash = notes.some(n => n.s <= -7), hasHe = notes.some(n => n.t === '六合' || n.t === '半合' || n.t === '天干合');
+  let mood = T.mood;
+  if (hasClash) mood += ' 命局地支逢冲，行程与情绪易有变动，出行预留缓冲时间。';
+  else if (hasHe) mood += ' 地支逢合，人际氛围融洽，易得助力。';
+  const tip = fg > .3 ? `今日天干${GAN_WX[dg]}为你的喜用，顺势而为即可。`
+            : fg < -.3 ? `今日天干${GAN_WX[dg]}偏逆你的喜用，宜稳不宜急，多留余地。`
+            : `今日天干${GAN_WX[dg]}与你的命局关系平和。`;
+
+  return {
+    a, score, level, ssGan, ssZhi, tip, notes, mood,
+    career: T.career, wealth: T.wealth,
+    lucky: luckyOf(a, today, seedKey),
+    name: nameInfo
+  };
+}
+/* ==========================================================================
+ * 一生运程：命格、四大领域、大运 / 流年
+ * ======================================================================== */
+const SS_GROUP = { 比肩:'比劫', 劫财:'比劫', 食神:'食伤', 伤官:'食伤', 偏财:'财', 正财:'财', 七杀:'官杀', 正官:'官杀', 偏印:'印', 正印:'印' };
+const DM_TRAIT = {
+  甲:'甲木如参天大树：正直进取，有担当与领导力，重原则；有时过于固执，不愿低头。',
+  乙:'乙木如花草藤蔓：柔韧圆融，善于变通与借力，重人缘；有时犹豫、依赖环境。',
+  丙:'丙火如朗朗红日：热情开朗，光明磊落，感染力强；有时爱表现、缺少耐性。',
+  丁:'丁火如烛光灯火：细腻敏感，专注而有内涵，温暖体贴；有时心思较重、易内耗。',
+  戊:'戊土如巍巍高山：厚重稳健，诚信包容，让人安心；有时不爱变动、反应偏慢。',
+  己:'己土如田园沃土：温和务实，善于包容与规划，默默耕耘；有时过于内敛、顾虑多。',
+  庚:'庚金如刀剑顽铁：刚毅果断，重义气，行动力强；有时直来直去、锋芒太露。',
+  辛:'辛金如珠玉首饰：精致敏锐，重品味与自尊，审美佳；有时完美主义、较为挑剔。',
+  壬:'壬水如江河大海：聪明灵动，胸怀开阔，主见强，适应力好；有时多变、难以专一。',
+  癸:'癸水如雨露细泉：细腻内敛，感知力强，善思善谋；有时想得多做得慢、易多虑。'
+};
+const PATTERN = {
+  比肩: { name:'建禄格', text:'自立自强、重独立，偏白手起家型，宜把专业能力与合作并重。' },
+  劫财: { name:'月劫格', text:'好胜重义气，在竞争环境中成长，宜谨慎合伙与财务往来。' },
+  食神: { name:'食神格', text:'温和乐观、有才艺与口福，重生活品质，适合创作、服务与专业技能路线。' },
+  伤官: { name:'伤官格', text:'才华横溢、不拘一格，创新与表达力强，须注意言辞与人际分寸。' },
+  偏财: { name:'偏财格', text:'眼界开阔、善交际，擅长整合资源与把握机会，财来财去需有规划。' },
+  正财: { name:'正财格', text:'务实勤勉、重信守约，善于经营与积累，生活与财务偏稳健。' },
+  七杀: { name:'七杀格', text:'魄力强、敢担当，在压力中成长，适合开拓与管理，需学会张弛有度。' },
+  正官: { name:'正官格', text:'重规矩、讲信誉，适合在体系与规则中稳步上升，易得名誉与长辈提携。' },
+  偏印: { name:'偏印格', text:'思维独特、悟性高，适合专才、研究或非主流路线，需防多疑与孤僻。' },
+  正印: { name:'正印格', text:'仁厚好学、有贵人缘，重名誉与内在修养，适合文教、研究与专业路线。' }
+};
+const CAREER = {
+  比劫:'事业上重自主与伙伴关系，适合创业、合伙、销售与团队管理，在竞争中成长。',
+  食伤:'以才华与表达立身，适合设计、内容创作、教育培训、研发技术与餐饮服务。',
+  财:'重实务与经营，适合商贸、金融理财、运营管理与实业，善于整合资源。',
+  官杀:'重责任与秩序，适合公职、大型机构、管理、法务、工程等需要担当的岗位。',
+  印:'以学识与信誉见长，适合教育、研究、医疗、文化出版与咨询类职业，贵人助力明显。'
+};
+const CAREER_SHORT = { 比劫:'独立合作', 食伤:'才华表达', 财:'务实经营', 官杀:'管理担当', 印:'学识贵人' };
+const WEALTH = {
+  旺强:'财星得力且日主能担，易在中年后积累可观资产，适合主动经营、扩大规模。',
+  旺弱:'财星虽旺但日主偏弱，机会多而精力有限，宜借助团队与贵人、稳扎稳打，慎防贪多。',
+  中强:'财运平稳，收入与努力成正比，日主有力，宜长期积累与稳健理财。',
+  中弱:'财运平稳，宜先强化本领与根基，再逐步放大收入，细水长流。',
+  弱强:'财星偏弱而日主有力，宜靠专业技能与人脉主动开源，寻找变现渠道。',
+  弱弱:'财星与日主皆偏弱，宜守成理财、先充实自己与贵人，避免高风险投资。'
+};
+const LOVE_PALACE = {
+  比肩:'伴侣与你性格相近，平等相处、彼此独立，需留意各自为政。',
+  劫财:'感情中易有竞争或外界干扰，宜坦诚沟通、建立清晰的边界。',
+  食神:'伴侣温和有趣，相处轻松，生活品质与情趣较好。',
+  伤官:'感情中个性鲜明、言辞直接，宜多包容、少挑剔，以柔化刚。',
+  偏财:'异性缘好、感情热烈，需用心经营专一与承诺。',
+  正财:'感情务实稳定，重视家庭与责任，易有踏实的归属感。',
+  七杀:'感情节奏偏强烈，伴侣较强势或相处有张力，需要磨合与让步。',
+  正官:'重承诺与规矩，婚姻观较传统，易遇端正可靠的伴侣。',
+  偏印:'感情较内敛，需要独处空间，伴侣偏理性或有独特气质。',
+  正印:'伴侣体贴照顾，情感上被呵护，同时要注意保持自我独立。'
+};
+const ORGAN = { 木:'肝胆、筋骨与眼睛', 火:'心脏、血液循环与小肠', 土:'脾胃与消化系统', 金:'肺、呼吸道与皮肤', 水:'肾、泌尿系统与耳' };
+const DIRECTION = { 木:'东', 火:'南', 土:'东北 / 西南', 金:'西', 水:'北' };
+const INDUSTRY = {
+  木:'教育文化、出版、林木园艺、服装、中医保健',
+  火:'能源、传媒影视、餐饮、科技电子、美妆',
+  土:'地产建筑、农业、仓储物流、咨询、陶瓷',
+  金:'金融投资、法律、机械工程、五金珠宝、汽车',
+  水:'贸易流通、物流旅游、水产饮品、信息传播、策划'
+};
+const DECADE_TEXT = {
+  比肩:'同辈、合作与自我主张增强的十年，宜结盟与独立并进，留意各自为政与分财。',
+  劫财:'竞争与消耗并存的十年，机会与对手同来，宜守财、慎合伙与担保。',
+  食神:'才华舒展、生活安逸的十年，宜发展专长与口碑，享受之余勿懈怠。',
+  伤官:'创新突破与锋芒毕露的十年，利创作与转型，言行须谨慎以免树敌。',
+  偏财:'机遇与人脉活跃的十年，利拓展与投资，进出较大，宜见好就收。',
+  正财:'稳健积累的十年，正当收入与家庭责任兼顾，利置业与长期规划。',
+  七杀:'压力与挑战并重的十年，磨炼意志、成就事业，宜强化实力与自律。',
+  正官:'名望与职位上升的十年，利晋升、考取资格与建立信誉，守规则得贵人。',
+  偏印:'钻研与转型的十年，利学习专业、研究或另辟蹊径，宜防孤立与多虑。',
+  正印:'贵人扶持、根基稳固的十年，利进修、置业与养生，宜主动行动。'
+};
+
+const levelOf = s => LEVELS.find(l => s >= l.min);
+const validGz = gz => typeof gz === 'string' && gz.length === 2 && GAN.includes(gz[0]) && ZHI.includes(gz[1]);
+
+/* 十神分布（比劫 / 食伤 / 财 / 官杀 / 印 各占比，总和为 1） */
+function godDist(c) {
+  const dm = c.d[0], d = { 比劫:0, 食伤:0, 财:0, 官杀:0, 印:0 };
+  const ganW = { y:1, m:1.2, h:1 }, zhiW = { y:1, m:2.5, d:1.5, h:1.2 };
+  for (const k in ganW) d[SS_GROUP[shiShen(dm, c[k][0])]] += ganW[k];
+  for (const k in zhiW) for (const h of hiddenOf(c[k][1])) d[SS_GROUP[shiShen(dm, h.gan)]] += zhiW[k] * h.w;
+  d.比劫 += 1;                                       // 日主自身
+  const t = Object.values(d).reduce((s, v) => s + v, 0);
+  for (const k in d) d[k] /= t;
+  return d;
+}
+
+/* 某一步大运 / 流年干支与命局的契合度 */
+function periodScore(a, chart, gz) {
+  const dm = a.dm, g = gz[0], z = gz[1];
+  const favZhi = zz => hiddenOf(zz).reduce((s, h) => s + a.fav[GAN_WX[h.gan]] * h.w, 0);
+  let total = (10 * a.fav[GAN_WX[g]] + 10 * favZhi(z)) * .9;
+  const PAL = { y:'年支', m:'月支', d:'日支', h:'时支' }, PW = { y:1, m:1, d:2, h:1 };
+  const notes = []; let rel = 0;
+  for (const k of ['y','m','d','h']) {
+    for (const r of branchRelations(z, chart[k][1])) {
+      rel += r.s * PW[k];
+      notes.push({ t:r.t, s:r.s, text:`${z}${r.t}${PAL[k]}${chart[k][1]}` });
+    }
+  }
+  total += clamp(rel, -14, 14);
+  if (pairHas(HE5, g, dm)) { total += 4; notes.push({ t:'天干合', s:4, text:`${g}合日主${dm}` }); }
+  else if (pairHas(GANCHONG, g, dm)) { total -= 2; notes.push({ t:'天干冲', s:-2, text:`${g}冲日主${dm}` }); }
+  return { score: clamp(Math.round(62 + total), 38, 96), ss: shiShen(dm, g), ssZhi: shiShen(dm, hiddenOf(z)[0].gan), notes };
+}
+
+function healthReading(a) {
+  const shares = WX.map(e => ({ e, v: a.el[e] / a.total })).sort((x, y) => x.v - y.v);
+  const weak = shares[0], strong = shares[4], pct = v => Math.round(v * 100);
+  const missing = shares.filter(s => s.v < .04).map(s => s.e);
+  const parts = [];
+  if (missing.length) parts.push(`命局${missing.join('、')}行近乎缺失，对应的${missing.map(e => ORGAN[e]).join('；')}平时宜多加保养。`);
+  else parts.push(`${weak.e}行相对偏弱（约${pct(weak.v)}%），宜多留意${ORGAN[weak.e]}的保养。`);
+  if (strong.v >= .34) parts.push(`${strong.e}行偏旺（约${pct(strong.v)}%），${ORGAN[strong.e]}相关易过劳或失衡，宜劳逸结合、作息规律。`);
+  else parts.push('五行分布较均衡，保持规律作息与适度运动即可。');
+  return parts.join('');
+}
+
+function loveReading(c, a, gender, dist) {
+  const ssDay = shiShen(a.dm, hiddenOf(c.d[1])[0].gan);
+  const parts = [LOVE_PALACE[ssDay]];
+  const rels = ['y','m','h'].flatMap(k => branchRelations(c.d[1], c[k][1]).map(r => r.t));
+  if (rels.includes('六冲')) parts.push('日支逢冲，感情与居所易有波动，婚后宜多沟通、少争执。');
+  else if (rels.includes('六合') || rels.includes('半合')) parts.push('日支逢合，姻缘和顺，易得伴侣体谅。');
+  else if (rels.includes('相刑') || rels.includes('相害')) parts.push('日支带刑害，相处细节处宜多体谅。');
+  const star = dist[gender === 1 ? '财' : '官杀'];
+  if (star < .08) parts.push('命中感情星偏弱，缘分来得偏晚，宜主动拓展社交圈。');
+  else if (star > .3) parts.push('感情星偏旺，感情课题较多，宜专一经营、避免分心。');
+  return { basis: gender === 1 ? '男命以财星论配偶缘，日支为夫妻宫' : '女命以官杀星论配偶缘，日支为夫妻宫', text: parts.join('') };
+}
+
+/* dayun: { cycles:[{gz,startYear,endYear,startAge,endAge,liuNian:[{year,age,gz}]}] }（来自 lunar-javascript 的 Yun / DaYun） */
+function lifetimeReading(chart, gender, dayun, birthYear, curYear, name) {
+  const a = analyzeChart(chart), dist = godDist(chart), dm = a.dm;
+  const nb = name ? nameBundle(a, name) : null;
+  const groups = Object.entries(dist).sort((x, y) => y[1] - x[1]);
+  const ssMonth = shiShen(dm, hiddenOf(chart.m[1])[0].gan);
+
+  const career = CAREER[groups[0][0]] + (groups[1][1] >= .2 ? `同时兼具「${CAREER_SHORT[groups[1][0]]}」的特质。` : '');
+  const wLvl = dist.财 >= .25 ? '旺' : dist.财 >= .12 ? '中' : '弱';
+  const wealth = WEALTH[wLvl + (a.strong ? '强' : '弱')];
+
+  const cycles = dayun.cycles.filter(c => validGz(c.gz)).map(c => {
+    const p0 = periodScore(a, chart, c.gz);
+    // 姓名按人生阶段微调：前运看地格，中运看人格，后运看总格
+    const adj = nb ? stageGridAdj(a, nb.np.grids[stageKey((c.startAge + c.endAge) / 2)]) : 0;
+    const p = { ...p0, score: clamp(Math.round(p0.score + adj), 38, 96) };
+    const years = (c.liuNian || []).filter(l => validGz(l.gz)).map(l => {
+      const q = periodScore(a, chart, l.gz);
+      const score = clamp(Math.round(.7 * q.score + .3 * p.score), 38, 96);
+      return { year: l.year, age: l.age, gz: l.gz, ss: q.ss, score, level: levelOf(score), notes: q.notes, isNow: l.year === curYear };
+    });
+    return { gz: c.gz, startYear: c.startYear, endYear: c.endYear, startAge: c.startAge, endAge: c.endAge,
+             ss: p.ss, ssZhi: p.ssZhi, score: p.score, level: levelOf(p.score), text: DECADE_TEXT[p.ss], notes: p.notes, years,
+             nameAdj: nb ? Math.round(adj * 10) / 10 : null };
+  });
+  let curIdx = cycles.findIndex(c => curYear >= c.startYear && curYear <= c.endYear);
+  const pre = curIdx < 0 && cycles.length > 0 && curYear < cycles[0].startYear;
+  if (curIdx < 0) curIdx = pre ? 0 : Math.max(cycles.length - 1, 0);
+  const scoreOf = i => cycles[i].score;
+  let bestIdx = 0, worstIdx = 0;
+  cycles.forEach((c, i) => { if (scoreOf(i) > scoreOf(bestIdx)) bestIdx = i; if (scoreOf(i) < scoreOf(worstIdx)) worstIdx = i; });
+  const lifeScore = cycles.length ? Math.round(cycles.reduce((s, c) => s + c.score, 0) / cycles.length) : 0;
+
+  const favs = [...a.favorable, ...WX.filter(e => !a.favorable.includes(e))].slice(0, 2);
+  const lucky = {
+    elements: favs,
+    numbers: [...HETU[favs[0]], ...HETU[favs[1]]],
+    colors: [{ ...WX_COLORS[favs[0]][0], el: favs[0] }, { ...WX_COLORS[favs[0]][1], el: favs[0] }, { ...WX_COLORS[favs[1]][0], el: favs[1] }],
+    directions: favs.map(e => `${e}：${DIRECTION[e]}`),
+    industries: favs.map(e => ({ el: e, text: INDUSTRY[e] }))
+  };
+
+  return {
+    a, dist, gender, age: curYear - birthYear + 1, pre, curIdx, bestIdx, worstIdx, lifeScore, lifeLevel: levelOf(lifeScore || 0),
+    personality: DM_TRAIT[dm],
+    pattern: { name: PATTERN[ssMonth].name, ss: ssMonth, text: PATTERN[ssMonth].text },
+    domains: { career, wealth, love: loveReading(chart, a, gender, dist), health: healthReading(a) },
+    cycles, lucky,
+    name: nb && { ...nb, stages: STAGE_DEF.map(s => ({ ...s, grid: nb.np.grids[s.k], adj: Math.round(stageGridAdj(a, nb.np.grids[s.k]) * 10) / 10 })) }
+  };
+}
+
+/* ==========================================================================
+ * 姓名五格（熊崎式）：天格 / 人格 / 地格 / 外格 / 总格，并与八字喜用对照
+ * 笔画按《康熙字典》（繁体）计；内置少量常见字作“参考预填”，其余由用户填写
+ * ======================================================================== */
+const SURNAME_STROKES = {
+  王:4, 李:7, 张:11, 刘:15, 陈:16, 杨:13, 黄:12, 赵:14, 吴:7, 周:8, 徐:10, 孙:10, 马:10, 朱:6, 胡:9, 郭:15, 何:7, 林:8,
+  高:10, 罗:19, 郑:19, 梁:11, 谢:17, 宋:7, 唐:10, 许:11, 韩:17, 冯:12, 邓:19, 曹:11, 彭:12, 曾:12, 田:5, 董:15, 袁:10,
+  潘:16, 于:3, 蒋:17, 蔡:17, 余:7, 杜:7, 叶:15, 程:12, 苏:22, 魏:18, 吕:7, 丁:2, 任:6, 沈:8, 姚:9, 卢:16, 姜:9, 崔:11,
+  钟:17, 谭:19, 陆:16, 汪:8, 范:15, 金:8, 石:5, 廖:14, 贾:13, 夏:10, 韦:9, 傅:12, 方:4, 白:5, 邹:17, 孟:8, 熊:14,
+  秦:10, 邱:12, 江:7, 尹:4, 薛:19, 段:9, 雷:13, 侯:9, 龙:16, 史:5, 陶:16, 黎:15, 贺:12, 顾:21, 毛:4, 郝:14, 龚:22,
+  邵:12, 万:15, 钱:16, 严:20, 武:8, 戴:18, 赖:16, 洪:10
+};
+const GIVEN_STROKES = {
+  一:1, 二:2, 三:3, 大:3, 小:3, 子:3, 才:3, 山:3, 天:4, 文:4, 心:4, 水:4, 日:4, 月:4, 木:4, 玉:5, 平:5, 立:5, 正:5, 民:5, 永:5, 世:5,
+  光:6, 安:6, 宇:6, 志:7, 秀:7, 宏:7, 明:8, 欣:8, 佳:8, 俊:9, 怡:9, 美:9, 建:9, 军:9, 勇:9, 红:9, 思:9, 玲:10, 芳:10, 轩:10,
+  刚:10, 娜:10, 洋:10, 浩:11, 婉:11, 国:11, 海:11, 英:11, 敏:11, 梅:11, 晨:11, 梓:11, 伟:12, 华:12, 杰:12, 婷:12, 雅:12,
+  凯:12, 强:12, 涵:12, 博:12, 琳:13, 莉:13, 诗:13, 宁:14, 睿:14, 瑞:14, 嘉:14, 慧:15, 磊:15, 萱:15, 静:16, 燕:16, 涛:18,
+  丽:19, 鹏:19, 兰:23
+};
+const STROKES = { ...GIVEN_STROKES, ...SURNAME_STROKES };
+
+// 81 数理吉凶（传统熊崎式，各家略有出入）：吉 / 半（半吉）/ 凶
+const LUCK81 = '吉凶吉凶吉吉吉吉凶凶' + '吉凶吉凶吉吉吉吉凶凶' + '吉凶吉吉吉凶半凶半半' + '吉吉吉凶吉凶吉半吉半' + '吉半凶凶吉凶吉吉半半'
+             + '半吉半凶半凶吉半凶凶' + '半凶吉凶吉凶吉吉凶凶' + '半凶半凶半凶半半凶凶' + '吉';
+const LUCK_VAL = { 吉: 1, 半: .5, 凶: -1 };
+const LUCK_LABEL = { 吉: '吉', 半: '半吉', 凶: '凶' };
+const numWx = n => ['水','木','木','火','火','土','土','金','金','水'][n % 10];     // 1,2木 3,4火 5,6土 7,8金 9,0水
+const reduce81 = n => { while (n > 81) n -= 80; return n; };
+const GRID_META = {
+  tian: { n:'天格', d:'先天基础与祖荫' },
+  ren:  { n:'人格', d:'主运：性格与中年运' },
+  di:   { n:'地格', d:'前运：早年与根基' },
+  wai:  { n:'外格', d:'副运：人际与贵人' },
+  zong: { n:'总格', d:'总运：一生与晚年' }
+};
+const STAGE_DEF = [
+  { k:'di',   label:'前运', ages:'约 30 岁前',   g:'地格' },
+  { k:'ren',  label:'中运', ages:'约 30–49 岁', g:'人格' },
+  { k:'zong', label:'后运', ages:'约 50 岁起',   g:'总格' }
+];
+const stageKey = age => age < 30 ? 'di' : age < 50 ? 'ren' : 'zong';
+
+function nameGrids(st, surLen) {
+  const sur = st.slice(0, surLen), giv = st.slice(surLen), sum = l => l.reduce((s, v) => s + v, 0);
+  const raw = {
+    tian: surLen === 1 ? sur[0] + 1 : sur[0] + sur[1],
+    ren:  sur[surLen - 1] + giv[0],
+    di:   giv.length === 1 ? giv[0] + 1 : giv[0] + giv[1],
+    wai:  surLen === 1 ? (giv.length === 1 ? 2 : giv[1] + 1) : (giv.length === 1 ? sur[0] + 1 : sur[0] + giv[1]),
+    zong: sum(st)
+  };
+  const g = {};
+  for (const k in raw) {
+    const n = reduce81(raw[k]), luck = LUCK81[n - 1];
+    g[k] = { n, raw: raw[k], wx: numWx(n), luck, lv: LUCK_VAL[luck], label: LUCK_LABEL[luck] };
+  }
+  return g;
+}
+
+/* 三才（天人地五行）：相生 +1，比和 +.5，逆生 -.2，相克 -1 */
+function sancaiRel(a, b) {
+  if (a === b) return .5;
+  if (SHENG[a] === b) return 1;
+  if (SHENG[b] === a) return -.2;
+  return -1;
+}
+
+function nameBundle(a, name) {
+  const grids = nameGrids(name.strokes, name.surLen);
+  const wFit = { ren: .35, di: .2, zong: .2, wai: .15, tian: .1 };
+  const wNum = { ren: .35, di: .2, zong: .25, wai: .2 };
+  let fit = 0, num = 0;
+  for (const k in wFit) fit += wFit[k] * a.fav[grids[k].wx];
+  for (const k in wNum) num += wNum[k] * grids[k].lv;
+  const sancai = .4 * sancaiRel(grids.tian.wx, grids.ren.wx) + .6 * sancaiRel(grids.ren.wx, grids.di.wx);
+  const sancaiText = sancai >= .6 ? '三才相生，基础顺遂、做事得助' : sancai >= .2 ? '三才平和，发展较为稳定'
+                   : sancai > -.3 ? '三才平平，成败更多取决于自身努力' : '三才相克，过程中易有阻滞，宜稳扎稳打';
+  const fitText = fit >= .35 ? '姓名五行与八字喜用相合，名字对命局有补益。'
+                : fit >= .1 ? '姓名五行与命局基本协调。'
+                : fit > -.15 ? '姓名与命局关系平和，影响不大。'
+                : '姓名五行与命局喜用略有冲突，可在日常用色、方位上适当补足。';
+  const helpful = ['ren', 'di', 'zong', 'wai', 'tian'].filter(k => a.fav[grids[k].wx] > 0);
+  return { np: { grids, num, sancai, sancaiText, sancaiWx: [grids.tian.wx, grids.ren.wx, grids.di.wx] },
+           fit, fitText, helpful, chars: name.chars, strokes: name.strokes, surLen: name.surLen };
+}
+
+/* 某一格对某阶段运势的加减分（±4.5 以内） */
+function stageGridAdj(a, g) { return clamp(2.5 * a.fav[g.wx] + 2 * g.lv, -4.5, 4.5); }
+
+/* 解析并校验姓名输入；两项都为空返回 null（表示不使用姓名） */
+function parseName(sur, giv, strokes) {
+  sur = (sur || '').trim(); giv = (giv || '').trim();
+  if (!sur && !giv) return null;
+  if (!sur || !giv) throw new Error('请同时填写姓和名，或两项都留空');
+  const HAN = /^[㐀-鿿]+$/;
+  if (!HAN.test(sur) || !HAN.test(giv)) throw new Error('姓名请输入汉字');
+  const sc = [...sur], gc = [...giv];
+  if (sc.length > 2 || gc.length > 2) throw new Error('姓最多 2 字（复姓），名最多 2 字');
+  const chars = sc.concat(gc);
+  if (!Array.isArray(strokes) || strokes.length !== chars.length) throw new Error('笔画数量与姓名字数不一致');
+  const nums = chars.map((ch, i) => {
+    const s = String(strokes[i] ?? '').trim(), n = Number(s);
+    if (s === '' || !Number.isInteger(n) || n < 1 || n > 40) throw new Error(`请填写「${ch}」的康熙笔画（1–40 的整数）`);
+    return n;
+  });
+  return { sur, giv, surLen: sc.length, chars, strokes: nums };
+}
+// ==CORE-END==
+</script>
+
+<script>
+/* ==========================================================================
+ * 3. 页面逻辑（依赖 lunar-javascript：Solar / Lunar）
+ * ======================================================================== */
+let LJ = null;
+let MODE = 'today';          // 'today' | 'life'
+let LIFE = null;             // 当前一生运程结果（供点击大运时重绘）
+let STROKE_MEM = {};         // 用户填写过的笔画：{ 字: 笔画 }
+const $ = id => document.getElementById(id);
+const safe = (fn, fb) => { try { const v = fn(); return v === undefined || v === null ? fb : v; } catch (e) { return fb; } };
+
+const SHICHEN = [
+  { label:'子时（早）00:00 – 00:59', h:0 },  { label:'丑时 01:00 – 02:59', h:2 },
+  { label:'寅时 03:00 – 04:59', h:4 },        { label:'卯时 05:00 – 06:59', h:6 },
+  { label:'辰时 07:00 – 08:59', h:8 },        { label:'巳时 09:00 – 10:59', h:10 },
+  { label:'午时 11:00 – 12:59', h:12 },       { label:'未时 13:00 – 14:59', h:14 },
+  { label:'申时 15:00 – 16:59', h:16 },       { label:'酉时 17:00 – 18:59', h:18 },
+  { label:'戌时 19:00 – 20:59', h:20 },       { label:'亥时 21:00 – 22:59', h:22 },
+  { label:'子时（晚）23:00 – 23:59', h:23 }
+];
+const STORE_KEY = 'bazi-fortune-input-v1';
+
+function fillSelects() {
+  const now = new Date(), cy = now.getFullYear();
+  $('selYear').innerHTML = Array.from({ length: cy - 1900 }, (_, i) => cy - i).map(y => `<option value="${y}">${y} 年</option>`).join('');
+  $('selMonth').innerHTML = Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}">${i + 1} 月</option>`).join('');
+  $('selHour').innerHTML = SHICHEN.map(s => `<option value="${s.h}">${s.label}</option>`).join('');
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); } catch (e) {}
+  $('selYear').value = saved?.y ?? 1990;
+  $('selMonth').value = saved?.m ?? 1;
+  $('selHour').value = saved?.h ?? 12;
+  $('selGender').value = String(saved?.g ?? 1);
+  MODE = saved?.mode === 'life' ? 'life' : 'today';
+  $('inSur').value = typeof saved?.sur === 'string' ? saved.sur : '';
+  $('inGiv').value = typeof saved?.giv === 'string' ? saved.giv : '';
+  STROKE_MEM = (saved && saved.sm && typeof saved.sm === 'object') ? saved.sm : {};
+  fillDays(saved?.d ?? 1);
+}
+function fillDays(keep) {
+  const y = +$('selYear').value, m = +$('selMonth').value;
+  const n = new Date(y, m, 0).getDate();
+  const cur = (keep ?? +$('selDay').value) || 1;
+  $('selDay').innerHTML = Array.from({ length: n }, (_, i) => `<option value="${i + 1}">${i + 1} 日</option>`).join('');
+  $('selDay').value = Math.min(cur, n);
+}
+
+/* ---- 姓名输入：按字生成笔画框（内置参考值可修改） ---- */
+const HAN1 = /[㐀-鿿]/;
+function renderStrokeBox() {
+  const sur = [...$('inSur').value.trim()].filter(c => HAN1.test(c)).slice(0, 2);
+  const giv = [...$('inGiv').value.trim()].filter(c => HAN1.test(c)).slice(0, 2);
+  const box = $('strokeBox');
+  if (!sur.length && !giv.length) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+  const cell = (ch, role) => {
+    const mem = STROKE_MEM[ch], ref = STROKES[ch];
+    const val = mem !== undefined ? mem : (ref !== undefined ? ref : '');
+    const isRef = mem === undefined && ref !== undefined;
+    return `<label class="flex items-center gap-2 rounded-lg border border-ink-600 bg-ink-900/60 px-3 py-2">
+      <span class="text-xl font-bold text-gold-300">${ch}</span>
+      <span class="text-[10px] text-stone-500">${role}${isRef ? ' · 参考值' : ''}</span>
+      <input type="number" inputmode="numeric" min="1" max="40" data-ch="${ch}" value="${val}" placeholder="笔画" aria-label="${ch}的康熙笔画"
+        class="stk fld ml-auto w-16 rounded border border-ink-600 px-2 py-1 text-right text-stone-100 placeholder-stone-600">
+    </label>`;
+  };
+  box.innerHTML = `
+    <div class="mb-1 text-xs text-stone-400">康熙笔画（繁体字笔画，请核对后再测算）</div>
+    <div class="grid grid-cols-2 gap-2">${sur.map(c => cell(c, '姓')).join('')}${giv.map(c => cell(c, '名')).join('')}</div>
+    <p class="mt-1.5 text-[11px] leading-relaxed text-stone-500">示例：华＝華 12、国＝國 11、海＝11。偏旁按原字计：氵＝水 4、艹＝艸 6、扌＝手 4、忄＝心 4、王字旁＝玉 5。不确定的字可查“康熙字典笔画”。</p>`;
+  box.classList.remove('hidden');
+}
+function getName() {
+  const strokes = [...document.querySelectorAll('#strokeBox input.stk')].map(i => i.value);
+  return parseName($('inSur').value, $('inGiv').value, strokes);
+}
+
+/* ---- lunar-javascript 调用 ---- */
+function buildChart(y, m, d, h) {
+  const solar = LJ.Solar.fromYmdHms(y, m, d, h, 0, 0);
+  const lunar = solar.getLunar();
+  const ec = lunar.getEightChar();               // 默认 sect=2：晚子时日柱算当天
+  const chart = { y: ec.getYear(), m: ec.getMonth(), d: ec.getDay(), h: ec.getTime() };
+  for (const k in chart) {
+    const p = chart[k];
+    if (typeof p !== 'string' || p.length !== 2 || !GAN.includes(p[0]) || !ZHI.includes(p[1])) throw new Error('八字数据异常：' + JSON.stringify(chart));
+  }
+  const nayin = {
+    y: safe(() => ec.getYearNaYin(), ''), m: safe(() => ec.getMonthNaYin(), ''),
+    d: safe(() => ec.getDayNaYin(), ''),  h: safe(() => ec.getTimeNaYin(), '')
+  };
+  return { chart, nayin, ec, lunarText: safe(() => lunar.toString(), '') };
+}
+/* 大运 / 流年：Yun → DaYun → LiuNian（gender: 1 男 / 0 女；起运第 0 项为“童限”，干支为空） */
+function getDaYunList(ec, gender) {
+  const yun = ec.getYun(gender);
+  const cycles = Array.from(yun.getDaYun()).map(dy => ({
+    gz: safe(() => dy.getGanZhi(), ''),
+    startYear: dy.getStartYear(), endYear: dy.getEndYear(),
+    startAge: dy.getStartAge(), endAge: dy.getEndAge(),
+    liuNian: safe(() => Array.from(dy.getLiuNian()).map(ln => ({ year: ln.getYear(), age: ln.getAge(), gz: ln.getGanZhi() })), [])
+  }));
+  return {
+    cycles,
+    forward: safe(() => yun.isForward(), null),
+    startDate: safe(() => yun.getStartSolar().toYmd(), '')
+  };
+}
+function getToday() {
+  const now = new Date();
+  const lunar = LJ.Lunar.fromDate(now);
+  const ec = lunar.getEightChar();
+  return { now, lunar, pillars: { y: ec.getYear(), m: ec.getMonth(), d: ec.getDay() } };
+}
+function getAlmanac(lunar) {
+  const arr = v => Array.from(v || []);
+  return {
+    yi: arr(safe(() => lunar.getDayYi(), [])),
+    ji: arr(safe(() => lunar.getDayJi(), [])),
+    tianShen: safe(() => lunar.getDayTianShen(), ''),
+    tianShenType: safe(() => lunar.getDayTianShenType(), ''),
+    tianShenLuck: safe(() => lunar.getDayTianShenLuck(), ''),
+    zhiXing: safe(() => lunar.getZhiXing(), ''),
+    chong: safe(() => lunar.getDayChongShengXiao(), ''),
+    sha: safe(() => lunar.getDaySha(), ''),
+    cai: safe(() => lunar.getDayPositionCaiDesc(), ''),
+    xi: safe(() => lunar.getDayPositionXiDesc(), ''),
+    fu: safe(() => lunar.getDayPositionFuDesc(), ''),
+    nayin: safe(() => lunar.getDayNaYin(), ''),
+    jieqi: safe(() => lunar.getJieQi(), ''),
+    lunarText: safe(() => lunar.toString(), ''),
+    yearShengXiao: safe(() => lunar.getYearShengXiao(), '')
+  };
+}
+
+/* ---- 渲染 ---- */
+const elTag = e => `<span style="color:${WX_COLOR[e]}">${e}</span>`;
+function pillarCard(label, gz, ss, nayin, isDay) {
+  const g = gz[0], z = gz[1];
+  const hid = hiddenOf(z).map(h => `<span style="color:${WX_COLOR[GAN_WX[h.gan]]}">${h.gan}</span>`).join(' ');
+  return `
+  <div class="rounded-xl border ${isDay ? 'border-gold-500/70 bg-gold-500/5' : 'border-ink-600 bg-ink-900/60'} px-2 py-3 text-center">
+    <div class="text-xs text-stone-400">${label}</div>
+    <div class="h-4 text-[11px] text-gold-400">${ss}</div>
+    <div class="mt-1 text-4xl font-bold leading-tight" style="color:${WX_COLOR[GAN_WX[g]]}">${g}</div>
+    <div class="text-4xl font-bold leading-tight" style="color:${WX_COLOR[ZHI_WX[z]]}">${z}</div>
+    <div class="mt-1 text-[11px] text-stone-500">${GAN_WX[g]}${ZHI_WX[z]}</div>
+    <div class="mt-1 text-[11px] text-stone-500">藏干 ${hid}</div>
+    <div class="text-[11px] text-stone-500 h-4">${nayin || ''}</div>
+  </div>`;
+}
+const listChips = (arr, cls, empty) => arr.length
+  ? arr.slice(0, 10).map(x => `<span class="rounded-full border px-3 py-1 text-sm ${cls}">${x}</span>`).join('')
+  : `<span class="text-sm text-stone-500">${empty}</span>`;
+
+/* 姓名五格卡片（今日 / 一生共用；extra 为各模式的补充内容） */
+const luckCls = l => l === '吉' ? 'border-gold-500/50 text-gold-300' : l === '凶' ? 'border-crimson-500/50 text-crimson-400' : 'border-stone-500/50 text-stone-300';
+const signed = v => (v > 0 ? '+' : '') + v;
+function nameCard(nm, extra) {
+  const np = nm.np;
+  const cells = ['tian', 'ren', 'di', 'wai', 'zong'].map(k => {
+    const g = np.grids[k], m = GRID_META[k];
+    return `<div class="rounded-xl border border-ink-600 bg-ink-900/60 p-3 text-center">
+      <div class="text-xs text-stone-400">${m.n}</div>
+      <div class="text-2xl font-bold leading-tight" style="color:${WX_COLOR[g.wx]}">${g.n}</div>
+      <div class="text-xs" style="color:${WX_COLOR[g.wx]}">${g.wx}</div>
+      <span class="mt-1 inline-block rounded border px-1.5 py-0.5 text-[10px] ${k === 'tian' ? 'border-ink-600 text-stone-500' : luckCls(g.luck)}">${k === 'tian' ? '不论吉凶' : g.label}</span>
+      <div class="mt-1 text-[10px] leading-snug text-stone-500">${m.d}</div>
+    </div>`;
+  }).join('');
+  return `
+  <section class="card fade-up p-5 sm:p-7">
+    <div class="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+      <h2 class="tracking-widest text-gold-400">姓名五格</h2>
+      <span class="text-xs text-stone-500">${nm.chars.join('')}　笔画 ${nm.strokes.join(' + ')}</span>
+    </div>
+    <div class="grid grid-cols-2 gap-2 sm:grid-cols-5">${cells}</div>
+    <div class="mt-4 space-y-1 text-sm leading-relaxed text-stone-300">
+      <p>三才配置：${np.sancaiWx.map(elTag).join(' - ')}，${np.sancaiText}。</p>
+      <p>${nm.fitText}${nm.helpful.length ? `（与你喜用相合的有：${nm.helpful.map(k => GRID_META[k].n).join('、')}）` : ''}</p>
+    </div>
+    ${extra || ''}
+  </section>`;
+}
+const nameTodayExtra = nm => `
+  <div class="mt-4 border-t border-ink-600 pt-4">
+    <p class="text-sm text-stone-300">姓名对今日评分的加成：<b class="${nm.bonus >= 0 ? 'text-gold-300' : 'text-crimson-400'}">${signed(nm.bonus)} 分</b>
+      <span class="text-xs text-stone-500">（上限 ±8，姓名只是辅助因素）</span></p>
+    <div class="mt-2 flex flex-wrap gap-2">${nm.parts.map(p => `<span class="rounded-md border px-2.5 py-1 text-xs ${p.v >= 0 ? 'border-gold-500/40 text-gold-300' : 'border-crimson-500/50 text-crimson-400'}">${p.k} ${signed(p.v)}</span>`).join('')}</div>
+    <p class="mt-2 text-xs text-stone-500">${nm.dailyText}。</p>
+  </div>`;
+const nameLifeExtra = nm => `
+  <div class="mt-4 border-t border-ink-600 pt-4">
+    <p class="mb-2 text-xs text-stone-500">姓名按人生阶段微调大运评分：前运看地格，中运看人格，后运看总格。</p>
+    <div class="grid gap-2 sm:grid-cols-3">${nm.stages.map(s => `
+      <div class="rounded-xl border border-ink-600 bg-ink-900/60 p-3">
+        <div class="flex items-baseline justify-between"><b class="text-gold-300">${s.label}</b><span class="text-[11px] text-stone-500">${s.ages}</span></div>
+        <div class="mt-1 text-sm text-stone-300">${s.g} <b style="color:${WX_COLOR[s.grid.wx]}">${s.grid.n}（${s.grid.wx}）</b> <span class="text-xs ${s.grid.luck === '凶' ? 'text-crimson-400' : 'text-gold-300'}">${s.grid.label}</span></div>
+        <div class="mt-0.5 text-xs ${s.adj >= 0 ? 'text-gold-300' : 'text-crimson-400'}">对该阶段大运 ${signed(s.adj)} 分</div>
+      </div>`).join('')}</div>
+  </div>`;
+
+/* 八字排盘卡片（今日 / 一生两种模式共用） */
+function baziSection(input, chartInfo, a) {
+  const { chart, nayin } = chartInfo, dm = a.dm;
+  const dist = WX.map(e => {
+    const pct = Math.round(a.el[e] / a.total * 100);
+    return `<div class="flex items-center gap-2 text-sm">
+      <span class="w-5" style="color:${WX_COLOR[e]}">${e}</span>
+      <div class="h-2 flex-1 overflow-hidden rounded-full bg-ink-700"><div class="h-full rounded-full" style="width:${pct}%;background:${WX_COLOR[e]}"></div></div>
+      <span class="w-9 text-right text-xs text-stone-400">${pct}%</span>
+    </div>`;
+  }).join('');
+  return `
+  <section class="card fade-up p-5 sm:p-7">
+    <div class="mb-4 flex items-baseline justify-between">
+      <h2 class="tracking-widest text-gold-400">八字排盘</h2>
+      <span class="text-xs text-stone-500">${input.y}年${input.m}月${input.d}日 · ${SHICHEN.find(s => s.h === input.h).label.split(' ')[0]}</span>
+    </div>
+    <div class="grid grid-cols-4 gap-2 sm:gap-3">
+      ${pillarCard('年柱', chart.y, shiShen(dm, chart.y[0]), nayin.y)}
+      ${pillarCard('月柱', chart.m, shiShen(dm, chart.m[0]), nayin.m)}
+      ${pillarCard('日柱', chart.d, '日主', nayin.d, true)}
+      ${pillarCard('时柱', chart.h, shiShen(dm, chart.h[0]), nayin.h)}
+    </div>
+    <div class="mt-5 grid gap-5 sm:grid-cols-2">
+      <div class="space-y-2">${dist}</div>
+      <div class="text-sm leading-relaxed text-stone-300">
+        <p>日主 <b style="color:${WX_COLOR[a.dmEl]}">${dm}${a.dmEl}</b>，命局<b class="text-gold-300">${a.label}</b>。</p>
+        <p class="mt-1">喜用五行：${a.favorable.map(elTag).join(' ') || '—'}</p>
+        <p>需留意：${a.unfavorable.map(elTag).join(' ') || '—'}</p>
+      </div>
+    </div>
+  </section>`;
+}
+
+function render(input, chartInfo, today, alm, res) {
+  const { chart, nayin } = chartInfo, a = res.a, dm = a.dm;
+  const tp = today.pillars;
+  const R = 52, C = 2 * Math.PI * R;
+
+  $('result').innerHTML = `
+  ${baziSection(input, chartInfo, a)}
+
+  <!-- 综合评分 -->
+  <section class="card fade-up p-5 sm:p-7" style="animation-delay:.08s">
+    <h2 class="mb-4 tracking-widest text-gold-400">综合运势评分</h2>
+    <div class="flex flex-col items-center gap-6 sm:flex-row">
+      <div class="relative h-36 w-36 shrink-0">
+        <svg viewBox="0 0 120 120" class="h-36 w-36 -rotate-90">
+          <circle cx="60" cy="60" r="${R}" fill="none" stroke="#2e2937" stroke-width="9"/>
+          <circle id="ringFg" class="ring-fg" cx="60" cy="60" r="${R}" fill="none" stroke="url(#g1)" stroke-width="9" stroke-linecap="round"
+                  stroke-dasharray="${C}" stroke-dashoffset="${C}"/>
+          <defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d4af37"/><stop offset="1" stop-color="#c8323c"/></linearGradient></defs>
+        </svg>
+        <div class="absolute inset-0 flex flex-col items-center justify-center">
+          <div class="text-4xl font-bold text-gold-300">${res.score}</div>
+          <div class="text-xs text-stone-400">/ 100</div>
+        </div>
+      </div>
+      <div class="text-center sm:text-left">
+        <div class="text-2xl font-bold tracking-widest text-crimson-400">${res.level.name}</div>
+        <p class="mt-1 text-stone-300">${res.level.verdict}</p>
+        <p class="mt-3 text-sm text-stone-400">今日日柱 <b class="text-gold-300">${tp.d}</b>（日干对你为<b class="text-gold-300">${res.ssGan}</b>，日支藏<b class="text-gold-300">${res.ssZhi}</b>）。${res.tip}</p>
+      </div>
+    </div>
+    ${res.notes.length ? `<div class="mt-5 flex flex-wrap gap-2">${res.notes.map(n =>
+      `<span class="rounded-md border px-2.5 py-1 text-xs ${n.s > 0 ? 'border-gold-500/40 text-gold-300' : 'border-crimson-500/50 text-crimson-400'}">${n.text}</span>`).join('')}</div>` : ''}
+  </section>
+
+  ${res.name ? nameCard(res.name, nameTodayExtra(res.name)) : ''}
+
+  <!-- 运势解析 -->
+  <section class="card fade-up p-5 sm:p-7" style="animation-delay:.16s">
+    <h2 class="mb-4 tracking-widest text-gold-400">运势解析</h2>
+    <div class="grid gap-3 sm:grid-cols-3">
+      ${[['事业', '💼', res.career], ['财运', '💰', res.wealth], ['心情', '🌙', res.mood]].map(([t, ic, tx]) => `
+        <div class="rounded-xl border border-ink-600 bg-ink-900/60 p-4">
+          <div class="mb-2 flex items-center gap-2 text-gold-300"><span>${ic}</span><span class="tracking-widest">${t}</span></div>
+          <p class="text-sm leading-relaxed text-stone-300">${tx}</p>
+        </div>`).join('')}
+    </div>
+  </section>
+
+  <!-- 幸运数字 & 幸运色 -->
+  <section class="card fade-up p-5 sm:p-7" style="animation-delay:.24s">
+    <div class="grid gap-7 sm:grid-cols-2">
+      <div>
+        <h2 class="mb-3 tracking-widest text-gold-400">幸运数字</h2>
+        <div class="flex flex-wrap gap-3">
+          ${res.lucky.numbers.map(n => `<div class="flex h-12 w-12 items-center justify-center rounded-full border border-gold-500/60 bg-gold-500/10 text-xl font-bold text-gold-300">${n}</div>`).join('')}
+        </div>
+        <p class="mt-3 text-xs text-stone-500">取河图之数，依今日最契合你的五行（${res.lucky.elements.map(elTag).join('、')}）生成。</p>
+      </div>
+      <div>
+        <h2 class="mb-3 tracking-widest text-gold-400">幸运色</h2>
+        <div class="space-y-2.5">
+          ${res.lucky.colors.map(c => `
+            <div class="flex items-center gap-3">
+              <span class="h-9 w-9 rounded-lg border border-white/20 shadow-inner" style="background:${c.hex}"></span>
+              <span class="text-stone-200">${c.name}</span>
+              <span class="text-xs text-stone-500">${c.hex} · 属${c.el}</span>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 今日宜忌 -->
+  <section class="card fade-up p-5 sm:p-7" style="animation-delay:.32s">
+    <div class="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+      <h2 class="tracking-widest text-gold-400">今日宜忌</h2>
+      <span class="text-xs text-stone-500">${alm.lunarText ? '农历 ' + alm.lunarText.replace(/^.{4}年/, '') : ''}${alm.jieqi ? ' · ' + alm.jieqi : ''}</span>
+    </div>
+    <div class="grid gap-5 sm:grid-cols-2">
+      <div>
+        <div class="mb-2 flex items-center gap-2"><span class="flex h-6 w-6 items-center justify-center rounded bg-gold-500 text-sm font-bold text-ink-950">宜</span></div>
+        <div class="flex flex-wrap gap-2">${listChips(alm.yi, 'border-gold-500/40 text-gold-300', '无特别宜事')}</div>
+      </div>
+      <div>
+        <div class="mb-2 flex items-center gap-2"><span class="flex h-6 w-6 items-center justify-center rounded bg-crimson-500 text-sm font-bold text-white">忌</span></div>
+        <div class="flex flex-wrap gap-2">${listChips(alm.ji, 'border-crimson-500/50 text-crimson-400', '无特别忌事')}</div>
+      </div>
+    </div>
+    <dl class="mt-6 grid grid-cols-2 gap-x-4 gap-y-2 border-t border-ink-600 pt-4 text-sm sm:grid-cols-4">
+      ${[['今日干支', `${tp.y}年 ${tp.m}月 ${tp.d}日`], ['值神', [alm.tianShen, alm.tianShenType].filter(Boolean).join(' · ') || '—'],
+         ['建除十二神', alm.zhiXing ? alm.zhiXing + '日' : '—'], ['冲煞', alm.chong ? `冲${alm.chong} 煞${alm.sha}` : '—'],
+         ['财神方位', alm.cai || '—'], ['喜神方位', alm.xi || '—'], ['福神方位', alm.fu || '—'], ['日柱纳音', alm.nayin || '—']]
+        .map(([k, v]) => `<div><dt class="text-xs text-stone-500">${k}</dt><dd class="text-stone-300">${v}</dd></div>`).join('')}
+    </dl>
+  </section>`;
+
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const ring = $('ringFg'); if (ring) ring.style.strokeDashoffset = C * (1 - res.score / 100);
+  }));
+  $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ---- 一生运程渲染 ---- */
+const SCORE_COLOR = s => s >= 76 ? '#d4af37' : s >= 62 ? '#d6d3d1' : '#e0525a';
+const gzSpan = gz => `<span style="color:${WX_COLOR[GAN_WX[gz[0]]]}">${gz[0]}</span><span style="color:${WX_COLOR[ZHI_WX[gz[1]]]}">${gz[1]}</span>`;
+
+function lifeCurve(life) {
+  const cs = life.cycles, n = cs.length;
+  const W = 640, H = 230, pl = 34, pr = 22, pt = 22, pb = 48;
+  const xs = i => pl + (n === 1 ? (W - pl - pr) / 2 : i * (W - pl - pr) / (n - 1));
+  const ys = s => pt + (98 - s) / 63 * (H - pt - pb);
+  const cw = n === 1 ? W - pl - pr : (W - pl - pr) / (n - 1);      // 每个大运一整列点击热区
+  const pts = cs.map((c, i) => [xs(i), ys(c.score)]);
+  const line =pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
+  const area = `${line} L${pts[n - 1][0].toFixed(1)},${H - pb} L${pts[0][0].toFixed(1)},${H - pb} Z`;
+  const grid = [50, 70, 90].map(v => `<line x1="${pl}" x2="${W - pr}" y1="${ys(v).toFixed(1)}" y2="${ys(v).toFixed(1)}" stroke="#2e2937" stroke-dasharray="3 4"/><text x="${pl - 6}" y="${(ys(v) + 4).toFixed(1)}" text-anchor="end" font-size="11" fill="#78716c">${v}</text>`).join('');
+  const dots = cs.map((c, i) => {
+    const x = pts[i][0].toFixed(1), y = pts[i][1].toFixed(1), isCur = i === life.curIdx, isSel = i === life.sel;
+    return `<g data-idx="${i}" style="cursor:pointer">
+      <title>${c.gz}运 ${c.startAge}–${c.endAge}岁 · ${c.score}分（${c.level.name}）</title>
+      <rect x="${(pts[i][0] - cw / 2).toFixed(1)}" y="0" width="${cw.toFixed(1)}" height="${H}" fill="transparent"/>
+      ${isSel ? `<circle cx="${x}" cy="${y}" r="11" fill="none" stroke="#d4af37" stroke-width="1.5"/>` : ''}
+      <circle cx="${x}" cy="${y}" r="${isCur ? 6.5 : 5}" fill="${SCORE_COLOR(c.score)}" stroke="#0a090d" stroke-width="2"/>
+      <text x="${x}" y="${(pts[i][1] - 13).toFixed(1)}" text-anchor="middle" font-size="11" fill="#d6d3d1">${c.score}</text>
+      <text x="${x}" y="${H - pb + 17}" text-anchor="middle" font-size="12" fill="${isCur ? '#e0bc5a' : '#a8a29e'}" font-weight="${isCur ? 700 : 400}">${c.gz}</text>
+      <text x="${x}" y="${H - pb + 31}" text-anchor="middle" font-size="10" fill="#78716c">${c.startAge}岁</text>
+      ${isCur ? `<text x="${x}" y="${H - pb + 43}" text-anchor="middle" font-size="10" fill="#e0bc5a">当前</text>` : ''}
+    </g>`;
+  }).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" class="w-full" role="img" aria-label="一生大运运势曲线">
+    <defs><linearGradient id="lg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d4af37" stop-opacity=".28"/><stop offset="1" stop-color="#d4af37" stop-opacity="0"/></linearGradient></defs>
+    ${grid}<path d="${area}" fill="url(#lg)"/><path d="${line}" fill="none" stroke="#d4af37" stroke-width="2.2" stroke-linejoin="round"/>${dots}
+  </svg>`;
+}
+
+function drawCycles(life) {
+  $('lifeCycles').innerHTML = life.cycles.map((c, i) => `
+    <div class="cyc rounded-xl border p-3 ${i === life.sel ? 'border-gold-500/80 bg-gold-500/5' : 'border-ink-600 bg-ink-900/60'}" data-idx="${i}" tabindex="0" role="button" aria-pressed="${i === life.sel}">
+      <div class="flex items-baseline justify-between">
+        <div class="text-2xl font-bold">${gzSpan(c.gz)}</div>
+        ${i === life.curIdx ? '<span class="rounded bg-crimson-500 px-1.5 py-0.5 text-[10px] text-white">当前</span>' : ''}
+      </div>
+      <div class="mt-0.5 text-[11px] text-gold-400">${c.ss}运 · 支藏${c.ssZhi}</div>
+      <div class="text-xs text-stone-400">${c.startAge}–${c.endAge}岁 · ${c.startYear}–${c.endYear}</div>
+      <div class="mt-1.5 flex items-center gap-2"><span class="text-lg font-bold" style="color:${SCORE_COLOR(c.score)}">${c.score}</span><span class="text-xs text-stone-400">${c.level.name}</span></div>
+      <p class="mt-1.5 text-xs leading-relaxed text-stone-400">${c.text}</p>
+      ${c.nameAdj != null ? `<div class="mt-1 text-[10px] ${c.nameAdj >= 0 ? 'text-gold-300' : 'text-crimson-400'}">姓名 ${signed(c.nameAdj)}</div>` : ''}
+      ${c.notes.length ? `<div class="mt-2 flex flex-wrap gap-1">${c.notes.slice(0, 3).map(n => `<span class="rounded border px-1.5 py-0.5 text-[10px] ${n.s > 0 ? 'border-gold-500/40 text-gold-300' : 'border-crimson-500/50 text-crimson-400'}">${n.text}</span>`).join('')}</div>` : ''}
+    </div>`).join('');
+}
+
+function drawYears(life) {
+  const c = life.cycles[life.sel], ys = c.years;
+  const head = `<h3 class="mb-3 text-gold-300"><b>${c.gz}</b> 运（${c.startAge}–${c.endAge}岁）逐年流年</h3>`;
+  if (!ys.length) { $('lifeYears').innerHTML = head + '<p class="text-sm text-stone-500">暂无流年数据。</p>'; return; }
+  const bars = ys.map(y => `
+    <div class="flex flex-col items-center gap-1" title="${y.year}年 ${y.gz} · ${y.ss}年 · ${y.score}分">
+      <span class="text-[11px] ${y.isNow ? 'font-bold text-gold-300' : 'text-stone-400'}">${y.score}</span>
+      <div class="flex h-24 w-full items-end"><div class="w-full rounded-t" style="height:${Math.round((y.score - 30) / 70 * 100)}%;background:${SCORE_COLOR(y.score)};opacity:${y.isNow ? 1 : .55}"></div></div>
+      <span class="text-[11px] ${y.isNow ? 'font-bold text-gold-300' : 'text-stone-300'}">${y.gz}</span>
+      <span class="text-[10px] text-stone-500">${String(y.year).slice(2)}年</span>
+    </div>`).join('');
+  const best = ys.reduce((m, y) => y.score > m.score ? y : m, ys[0]);
+  const worst = ys.reduce((m, y) => y.score < m.score ? y : m, ys[0]);
+  $('lifeYears').innerHTML = head +
+    `<div class="grid gap-1" style="grid-template-columns:repeat(${ys.length},minmax(0,1fr))">${bars}</div>
+     <p class="mt-3 text-xs leading-relaxed text-stone-400">此运中相对更顺的是 <b class="text-gold-300">${best.year}</b> 年（${best.gz}），宜多把握；相对需谨慎的是 <b class="text-crimson-400">${worst.year}</b> 年（${worst.gz}），宜稳健行事。流年按农历年干支，并叠加所在大运的影响。</p>`;
+}
+
+function selectCycle(i) {
+  if (!LIFE || !LIFE.cycles[i]) return;
+  LIFE.sel = i;
+  $('lifeCurve').innerHTML = lifeCurve(LIFE);
+  drawCycles(LIFE); drawYears(LIFE);
+}
+
+function renderLife(input, chartInfo, dayun, life) {
+  const a = life.a, cur = life.cycles[life.curIdx], best = life.cycles[life.bestIdx], worst = life.cycles[life.worstIdx], d = life.domains;
+  LIFE = life; life.sel = life.curIdx;
+  const startLine = [dayun.startDate ? `约 ${dayun.startDate} 起运` : '', dayun.forward === null ? '' : (dayun.forward ? '大运顺排' : '大运逆排')].filter(Boolean).join('　·　');
+  const domCard = (icon, t, tx, extra = '') => `
+    <div class="rounded-xl border border-ink-600 bg-ink-900/60 p-4">
+      <div class="mb-2 flex items-center gap-2 text-gold-300"><span>${icon}</span><span class="tracking-widest">${t}</span></div>
+      <p class="text-sm leading-relaxed text-stone-300">${tx}</p>${extra}
+    </div>`;
+  $('result').innerHTML = `
+  ${baziSection(input, chartInfo, a)}
+
+  <section class="card fade-up p-5 sm:p-7" style="animation-delay:.08s">
+    <h2 class="mb-4 tracking-widest text-gold-400">命格总论</h2>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div class="rounded-xl border border-ink-600 bg-ink-900/60 p-4">
+        <div class="mb-1 text-xs text-stone-500">日主性格</div>
+        <p class="text-sm leading-relaxed text-stone-300">${life.personality}</p>
+      </div>
+      <div class="rounded-xl border border-ink-600 bg-ink-900/60 p-4">
+        <div class="mb-1 text-xs text-stone-500">月令格局</div>
+        <p class="text-sm leading-relaxed text-stone-300"><b class="text-gold-300">${life.pattern.name}</b>　${life.pattern.text}</p>
+      </div>
+    </div>
+    <p class="mt-4 text-sm text-stone-400">命局${a.label}，以 ${a.favorable.map(elTag).join('、')} 为喜用。各步大运的平均指数为 <b class="text-gold-300">${life.lifeScore}</b>。</p>
+  </section>
+
+  ${life.name ? nameCard(life.name, nameLifeExtra(life.name)) : ''}
+
+  <section class="card fade-up p-5 sm:p-7" style="animation-delay:.16s">
+    <div class="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+      <h2 class="tracking-widest text-gold-400">一生运势曲线</h2>
+      <span class="text-xs text-stone-500">${startLine}</span>
+    </div>
+    <p class="mb-3 text-sm leading-relaxed text-stone-300">
+      ${life.pre ? '你尚未起运，目前处于起运前的“童限”阶段。' : `你现年约 <b class="text-gold-300">${life.age}</b> 岁（虚岁），正行 <b class="text-gold-300">${cur.gz}</b> 大运（${cur.ss}运）。`}
+      一生中相对最顺的是 <b class="text-gold-300">${best.gz}</b> 运（${best.startAge}–${best.endAge}岁），宜多把握；相对需要稳守的是 <b class="text-crimson-400">${worst.gz}</b> 运（${worst.startAge}–${worst.endAge}岁）。
+    </p>
+    <div id="lifeCurve"></div>
+    <p class="mt-1 text-[11px] text-stone-500">点击曲线上的圆点或下方大运卡片，可查看该步大运的逐年流年。年龄为虚岁。</p>
+  </section>
+
+  <section class="card fade-up p-5 sm:p-7" style="animation-delay:.24s">
+    <h2 class="mb-4 tracking-widest text-gold-400">大运详解</h2>
+    <div id="lifeCycles" class="grid grid-cols-2 gap-3 sm:grid-cols-3"></div>
+  </section>
+
+  <section class="card fade-up p-5 sm:p-7" style="animation-delay:.32s"><div id="lifeYears"></div></section>
+
+  <section class="card fade-up p-5 sm:p-7" style="animation-delay:.4s">
+    <h2 class="mb-4 tracking-widest text-gold-400">人生各领域</h2>
+    <div class="grid gap-3 sm:grid-cols-2">
+      ${domCard('💼', '事业', d.career)}
+      ${domCard('💰', '财运', d.wealth)}
+      ${domCard('💞', '感情', d.love.text, `<p class="mt-2 text-[11px] text-stone-500">${d.love.basis}</p>`)}
+      ${domCard('🌿', '健康', d.health, '<p class="mt-2 text-[11px] text-stone-500">传统五行养生视角，不构成医疗建议。</p>')}
+    </div>
+  </section>
+
+  <section class="card fade-up p-5 sm:p-7" style="animation-delay:.48s">
+    <h2 class="mb-4 tracking-widest text-gold-400">一生幸运指南</h2>
+    <div class="grid gap-6 sm:grid-cols-2">
+      <div>
+        <div class="mb-2 text-xs text-stone-500">幸运数字</div>
+        <div class="flex flex-wrap gap-3">${life.lucky.numbers.map(n => `<div class="flex h-11 w-11 items-center justify-center rounded-full border border-gold-500/60 bg-gold-500/10 text-lg font-bold text-gold-300">${n}</div>`).join('')}</div>
+        <div class="mb-2 mt-5 text-xs text-stone-500">有利方位</div>
+        <p class="text-sm text-stone-300">${life.lucky.directions.join('　')}</p>
+      </div>
+      <div>
+        <div class="mb-2 text-xs text-stone-500">幸运色</div>
+        <div class="space-y-2.5">
+          ${life.lucky.colors.map(c => `
+            <div class="flex items-center gap-3">
+              <span class="h-9 w-9 rounded-lg border border-white/20 shadow-inner" style="background:${c.hex}"></span>
+              <span class="text-stone-200">${c.name}</span>
+              <span class="text-xs text-stone-500">${c.hex} · 属${c.el}</span>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="mt-5 border-t border-ink-600 pt-4">
+      <div class="mb-2 text-xs text-stone-500">适合发展的行业方向</div>
+      ${life.lucky.industries.map(i => `<p class="text-sm leading-relaxed text-stone-300"><span style="color:${WX_COLOR[i.el]}">${i.el}</span>　${i.text}</p>`).join('')}
+    </div>
+  </section>`;
+  $('lifeCurve').innerHTML = lifeCurve(life);
+  drawCycles(life); drawYears(life);
+  $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function setMode(m) {
+  MODE = m;
+  $('tabToday').setAttribute('aria-selected', String(m === 'today'));
+  $('tabLife').setAttribute('aria-selected', String(m === 'life'));
+  $('genderWrap').style.display = m === 'life' ? 'block' : 'none';
+  $('btnLabel').textContent = m === 'life' ? '测算一生运程' : '测算今日运势';
+  $('result').innerHTML = ''; LIFE = null;
+  try { const s = JSON.parse(localStorage.getItem(STORE_KEY) || '{}'); s.mode = m; localStorage.setItem(STORE_KEY, JSON.stringify(s)); } catch (e) {}
+}
+
+function showError(e) {
+  console.warn(e);
+  $('result').innerHTML = `<div class="card p-5 text-sm text-crimson-400">测算失败：${e.message || e}</div>`;
+}
+
+function onCalc() {
+  const input = { y: +$('selYear').value, m: +$('selMonth').value, d: +$('selDay').value, h: +$('selHour').value, g: +$('selGender').value, mode: MODE,
+                  sur: $('inSur').value.trim(), giv: $('inGiv').value.trim(), sm: STROKE_MEM };
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(input)); } catch (e) {}
+  try {
+    const name = getName();                       // 姓名留空则为 null；填写有误会抛出明确提示
+    const chartInfo = buildChart(input.y, input.m, input.d, input.h);
+    if (MODE === 'life') {
+      const gender = +input.g;
+      const dayun = getDaYunList(chartInfo.ec, gender);
+      const life = lifetimeReading(chartInfo.chart, gender, dayun, input.y, new Date().getFullYear(), name);
+      if (!life.cycles.length) throw new Error('未能取得大运数据');
+      renderLife(input, chartInfo, dayun, life);
+      return;
+    }
+    const today = getToday();
+    const alm = getAlmanac(today.lunar);
+    const key = `${input.y}-${input.m}-${input.d}-${input.h}|${today.now.getFullYear()}-${today.now.getMonth()}-${today.now.getDate()}`;
+    const res = dailyFortune(chartInfo.chart, today.pillars, alm, key, name);
+    render(input, chartInfo, today, alm, res);
+  } catch (e) { showError(e); }
+}
+
+/* ---- 启动 ---- */
+(async function init() {
+  fillSelects();
+  $('selYear').addEventListener('change', () => fillDays());
+  $('selMonth').addEventListener('change', () => fillDays());
+  $('btnCalc').addEventListener('click', onCalc);
+  $('inSur').addEventListener('input', renderStrokeBox);
+  $('inGiv').addEventListener('input', renderStrokeBox);
+  $('strokeBox').addEventListener('input', e => {
+    const t = e.target;
+    if (t.classList && t.classList.contains('stk')) STROKE_MEM[t.dataset.ch] = t.value;
+  });
+  renderStrokeBox();
+  $('tabToday').addEventListener('click', () => setMode('today'));
+  $('tabLife').addEventListener('click', () => setMode('life'));
+  $('result').addEventListener('click', e => { const t = e.target.closest('[data-idx]'); if (t) selectCycle(+t.dataset.idx); });
+  $('result').addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const t = e.target.closest('.cyc[data-idx]'); if (t) { e.preventDefault(); selectCycle(+t.dataset.idx); }
+  });
+  setMode(MODE);
+  $('todayLine').textContent = new Date().toLocaleDateString('zh-CN', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
+
+  $('btnCalc').disabled = true;
+  LJ = await ensureLunar();
+  if (LJ) {
+    $('btnCalc').disabled = false;
+    const t = safe(() => LJ.Lunar.fromDate(new Date()), null);
+    if (t) {
+      const ec = t.getEightChar();
+      $('todayLine').textContent += `　·　${ec.getYear()}年 ${ec.getMonth()}月 ${ec.getDay()}日`;
+    }
+  } else {
+    const b = $('libBanner');
+    b.classList.remove('hidden');
+    b.innerHTML = '无法加载 <b>lunar-javascript</b>。请检查网络，或执行 <code>npm i lunar-javascript</code> 后把 <code>node_modules/lunar-javascript/lunar.js</code> 复制到本页同目录再刷新。';
+  }
+})();
+</script>
+
+<!-- PWA：Service Worker 注册、更新提示、安装按钮 -->
+<script>
+(function () {
+  // Service Worker 只能在 https 或 localhost 下工作（GitHub Pages 是 https）
+  const canSW = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+
+  function showUpdateBanner(worker) {
+    if (document.getElementById('swBanner')) return;
+    const bar = document.createElement('div');
+    bar.id = 'swBanner';
+    bar.setAttribute('role', 'status');
+    bar.className = 'fixed inset-x-4 bottom-4 z-50 mx-auto flex max-w-md items-center justify-between gap-3 rounded-xl border border-gold-500/50 bg-ink-800 px-4 py-3 text-sm text-stone-200 shadow-xl';
+    bar.innerHTML = '<span>发现新版本</span><span class="flex gap-2"><button type="button" id="swLater" class="rounded-lg px-3 py-1 text-stone-400 hover:text-stone-200">稍后</button><button type="button" id="swNow" class="rounded-lg bg-gold-500 px-3 py-1 font-bold text-ink-950">立即更新</button></span>';
+    document.body.appendChild(bar);
+    document.getElementById('swLater').onclick = () => bar.remove();
+    document.getElementById('swNow').onclick = () => { window.__swUserAccepted = true; worker.postMessage({ type: 'SKIP_WAITING' }); };
+  }
+
+  if (canSW) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').then(reg => {
+        window.__swReg = reg;
+        if (reg.waiting && navigator.serviceWorker.controller) showUpdateBanner(reg.waiting);
+        reg.addEventListener('updatefound', () => {
+          const nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', () => {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) showUpdateBanner(nw);
+          });
+        });
+      }).catch(err => console.warn('Service Worker 注册失败：', err));
+      // 仅在用户点了“立即更新”之后才刷新，避免首次安装时无故重载
+      navigator.serviceWorker.addEventListener('controllerchange', () => { if (window.__swUserAccepted) location.reload(); });
+    });
+  }
+
+  // “安装到桌面”按钮（Chrome / Edge / Android；iOS 请用分享菜单“添加到主屏幕”）
+  let deferred = null;
+  const btn = document.getElementById('btnInstall');
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; btn.classList.remove('hidden'); });
+  btn.addEventListener('click', async () => {
+    if (!deferred) return;
+    deferred.prompt();
+    try { await deferred.userChoice; } catch (e) {}
+    deferred = null; btn.classList.add('hidden');
+  });
+  window.addEventListener('appinstalled', () => btn.classList.add('hidden'));
+})();
+</script>
+</body>
+</html>
