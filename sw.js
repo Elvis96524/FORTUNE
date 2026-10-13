@@ -15,7 +15,7 @@ const VERSION = 'v1';
 const STATIC_CACHE = `fz-static-${VERSION}`;
 const RUNTIME_CACHE = `fz-runtime-${VERSION}`;
 
-// 必须成功缓存的应用外壳（任何一项失败则安装失败，下次访问会重试）
+// 应用外壳（尽量全部缓存；个别失败不影响安装，页面的“安装检测”会提示缺哪个文件）
 const CORE = [
   './',
   './index.html',
@@ -41,7 +41,9 @@ const NAV_TIMEOUT_MS = 4000;
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
     const stat = await caches.open(STATIC_CACHE);
-    await stat.addAll(CORE.map(u => new Request(u, { cache: 'reload' })));
+    // 逐个缓存：个别文件缺失（例如漏传了某个图标）只记录警告，不让整个 Service Worker 安装失败
+    const res = await Promise.allSettled(CORE.map(u => stat.add(new Request(u, { cache: 'reload' }))));
+    res.forEach((r, i) => { if (r.status === 'rejected') console.warn('[sw] 预缓存失败：', CORE[i], r.reason && r.reason.message); });
     await Promise.all(OPTIONAL.map(u => stat.add(new Request(u, { cache: 'reload' })).catch(() => {})));
     const rt = await caches.open(RUNTIME_CACHE);
     await Promise.all(CDN_PRECACHE.map(async u => {
