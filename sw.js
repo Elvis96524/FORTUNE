@@ -11,7 +11,7 @@
  *
  * 所有路径均为相对路径，因此可部署在 GitHub Pages 的 /仓库名/ 子路径下。
  */
-const VERSION = 'v1';
+const VERSION = 'v2';
 const STATIC_CACHE = `fz-static-${VERSION}`;
 const RUNTIME_CACHE = `fz-runtime-${VERSION}`;
 
